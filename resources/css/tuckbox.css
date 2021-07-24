@@ -1,0 +1,210 @@
+body {
+	background-color: #CCCCCC;
+	font: 14px Verdana,Arial,sans-serif;
+	margin: 0;
+	padding: 12px;
+	width: 1400px;
+}
+
+input {
+	width: 50px;
+}
+input[readonly], select[disabled].readonly {
+	background-color: #CCCCCC;
+	color: #000000;
+}
+
+.label {
+	display: inline-block;
+	min-width: 60px;
+}
+.units {
+	display: inline-block;
+	min-width: 40px;
+}
+
+.label.error {
+	color: red;
+}
+
+/*
+  PAPER FIELD GROUP
+*/
+#page_tuckbox #paperFieldGroup {
+}
+#page_tuckbox #mainContainer:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_tuckbox #paperSizeFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #paperMarginsFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  BOX SIZE FIELD GROUP
+*/
+#page_tuckbox #boxSizeFieldGroup {
+	margin-top: 12px;
+}
+#page_tuckbox #boxSizeFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_tuckbox #cardDimensionsFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #cardDimensionsFieldGroup .label {
+	min-width: 96px;
+}
+#page_tuckbox #cardInsideBufferFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #cardInsideBufferFieldGroup .label {
+	min-width: 60px;
+}
+#page_tuckbox #cardMaterialFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  FLAPS FIELD GROUP
+*/
+#page_tuckbox #flapsFieldGroup {
+	margin-top: 12px;
+}
+#page_tuckbox #flapsFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_tuckbox #topFlapFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #topFlapFieldGroup .label {
+	min-width: 90px;
+}
+#page_tuckbox #sideFlapFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #sideFlapFieldGroup .label {
+	min-width: 90px;
+}
+#page_tuckbox #bottomFlapFieldGroup {
+	clear: both;
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #bottomFlapFieldGroup .label {
+	min-width: 90px;
+}
+
+/*
+  TABS FIELD GROUP
+*/
+#page_tuckbox #tabsFieldGroup {
+	margin-top: 12px;
+}
+#page_tuckbox #tabsFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_tuckbox #topTabsFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #topTabsFieldGroup .label {
+	min-width: 114px;
+}
+#page_tuckbox #topTab_taperType {
+	width: 84px;
+}
+#page_tuckbox #bottomTabsFieldGroup {
+	float: left;
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #bottomTabsFieldGroup .label {
+	min-width: 104px;
+}
+
+#page_tuckbox #buttonGroup {
+	margin: 12px 0;
+}
+
+/*
+  BACKGROUND FIELD GROUP
+*/
+#page_tuckbox #backgroundFieldGroup {
+	margin-top: 12px;
+}
+#page_tuckbox #backgroundFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_tuckbox #backgroundFieldGroup .label {
+	min-width: 50px;
+}
+#page_tuckbox #backgroundFieldGroup #background_color {
+	width: 124px;
+}
+
+#body {
+}
+#body:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+
+#settings {
+	float: left;
+	width: 560px;
+}
+
+#previewContainer {
+	float: left;
+	margin: 0;
+	padding: 0;
+}
+
+#preview {
+	background-color: white;
+	border: 1px solid black;
+	margin: 0;
+	padding: 0;
+}

@@ -1,0 +1,668 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>Tuck Box</title>
+
+<link href="css/tuckbox.css" rel="stylesheet" type="text/css" />
+
+<script src="resources/js/jquery-3.1.1.js"></script>
+<script src="resources/js/jquery.validate.js"></script>
+<script src="resources/js/tuckbox.js"></script>
+
+<script type="text/javascript">
+jQuery(function($) {
+	var PAPER_TYPES = {
+		A4: {
+			height: '297',
+			units: Units.MM,
+			width: '210'
+		},
+		LETTER: {
+			height: '11',
+			units: Units.INCHES,
+			width: '8.5'
+		},
+		LEGAL: {
+			height: '14',
+			units: Units.INCHES,
+			width: '8.5'
+		},
+		TABLOID: {
+			height: '17',
+			units: Units.INCHES,
+			width: '11'
+		}
+	};
+
+	function download(data, filename, type) {
+		var file = new Blob([data], {type: type});
+		if (window.navigator.msSaveOrOpenBlob) // IE10+
+			window.navigator.msSaveOrOpenBlob(file, filename);
+		else { // Others
+			var a = document.createElement('a'),
+					url = URL.createObjectURL(file);
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			setTimeout(function() {
+				document.body.removeChild(a);
+				window.URL.revokeObjectURL(url);  
+			}, 0); 
+		}
+	}
+
+	function changeUnits($inputs, toUnits) {
+		$inputs.each(function() {
+			var $input = $(this),
+				currentUnits = $input.data('units');
+
+			if (currentUnits && !currentUnits.equals(toUnits)) {
+				var storedValue = $input.data('storedValue');
+				$input.val(((storedValue) && storedValue.units.equals(toUnits))
+					? storedValue.value
+					: toUnits.convert($input.val(), currentUnits));
+			}
+
+			$input.data('units', toUnits).closest('.field').find('.units').text(toUnits.abbrev);
+		});
+	}
+
+	function updateStoredValue($input) {
+		$input.data('storedValue', {
+			value: $input.val(),
+			units: $input.data('units')
+		});
+	}
+
+	function updateTopTabTaperTypeSCurveExtraLength() {
+		var taperType = tuckbox.TAPER_TYPES[$('#topTab_taperType').val()];
+
+		console.log('taperType: ' + taperType);
+
+		if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
+			var catchLength = Number($('#topTab_catchLength').val()),
+				cornerRadius = Number($('#topTab_cornerRadius').val()),
+				curveLength = Number($('#topTab_curveLength').val()),
+				length = Number($('#topTab_length').val());
+
+			$('#topTab_extraLength').val(length - catchLength - curveLength - cornerRadius);
+		} else {
+			$('#topTab_extraLength').val('');
+		}
+	}
+
+	$('#paper_type').change(function() {
+		var code = $(this).val();
+		if (code != '') {
+			var paperType = PAPER_TYPES[code];
+			$('#paper_units_select').prop('disabled', true).addClass('readonly').val(paperType.units.id).change();
+			$('#paper_height').prop('readonly', true).val(paperType.height).change();
+			$('#paper_width').prop('readonly', true).val(paperType.width).change();
+		} else {
+			$('#paper_height').prop('readonly', false);
+			$('#paper_width').prop('readonly', false);
+			$('#paper_units_select').prop('disabled', false).removeClass('readonly');
+		}
+	}).change();
+
+	var $paperInputs = $('#paperSizeFieldGroup, #paperMarginsFieldGroup').find('.units').closest('.field').find('input'),
+		$imageInputs = $('#imageFieldGroup').find('.units').closest('.field').find('input');
+
+
+	$('#paper_units_select').change(function() {
+		var val = $(this).val();
+		$('#paper_units').val(val);
+		changeUnits($paperInputs, Units(val));
+	}).change();
+
+	$('#doc_units').change(function() {
+		changeUnits($imageInputs, Units($(this).val()));
+	}).change();
+
+	$('#topTab_taperType').change(function() {
+		var taperType = tuckbox.TAPER_TYPES[$(this).val()];
+		
+		if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
+			$('#topTabsFieldGroup').find('.field.for_topTabTaperTypeSCurve').prop('disabled', false).closest('.field').slideDown('fast');
+		} else {
+			$('#topTabsFieldGroup').find('.field.for_topTabTaperTypeSCurve').prop('disabled', true).closest('.field').slideUp('fast');
+		}
+	}).change();
+
+	$paperInputs.data('units', Units($('#paper_units').val())).each(function() {
+		updateStoredValue($(this));
+	}).change(function() {
+		updateStoredValue($(this));
+	});
+
+	$imageInputs.data('units', Units($('#doc_units').val())).each(function() {
+		updateStoredValue($(this));
+	}).change(function() {
+		updateStoredValue($(this));
+	});
+
+	function generateDoc() {
+		var paperUnits = Units($('#paper_units').val()),
+			docUnits = Units($('#doc_units').val());
+
+		function getUserUnits(val) {
+			return Units.MM.convert(Number(val), docUnits);
+		}
+
+		var paper = {
+			height: Number($('#paper_height').val()),
+			units: paperUnits,
+			width: Number($('#paper_width').val())
+		};
+
+		var margin = {
+			left: Number($('#paper_margin_left').val()),
+			top: Number($('#paper_margin_top').val()),
+		};
+
+		var card = {
+			height: getUserUnits($('#card_height').val()),
+			depth: getUserUnits($('#card_depth').val()),
+			width: getUserUnits($('#card_width').val())
+		};
+
+		var insideBuffer = {
+			depth: getUserUnits($('#insideBuffer_depth').val()),
+			height: getUserUnits($('#insideBuffer_height').val()),
+			width: getUserUnits($('#insideBuffer_width').val())
+		};
+
+		var materialThickness = getUserUnits($('#material_thickness').val());
+
+		var topFlapTongue = {
+			curveWidth: getUserUnits($('#topFlapTongue_curveWidth').val()),
+			length: getUserUnits($('#topFlapTongue_length').val())
+		};
+
+		var sideFlap = {
+			gap: getUserUnits($('#sideFlap_gap').val()),
+			taperWidth: getUserUnits($('#sideFlap_taperWidth').val())
+		};
+
+		var bottomFlap = {
+			gap: getUserUnits($('#bottomFlap_gap').val()),
+			taperWidth: getUserUnits($('#bottomFlap_taperWidth').val())
+		};
+
+		var topTab = {
+			catchLength: getUserUnits($('#topTab_catchLength').val()),
+			cornerRadius: getUserUnits($('#topTab_cornerRadius').val()),
+			curveLength: getUserUnits($('#topTab_curveLength').val()),
+			length: getUserUnits($('#topTab_length').val()),
+			taperType: tuckbox.TAPER_TYPES[$('#topTab_taperType').val()],
+			taperWidth: getUserUnits($('#topTab_taperWidth').val())
+		};
+
+		var bottomTab = {
+			cornerRadius: getUserUnits($('#bottomTab_cornerRadius').val()),
+			length: getUserUnits($('#bottomTab_length').val()),
+			taperWidth: getUserUnits($('#bottomTab_taperWidth').val())
+		};
+
+		var backSlits = {
+			length: Number($('#backSlits_length').val())
+		};
+
+		var lockSlits = {
+			length: Number($('#lockSlits_length').val())
+		};
+
+		var thumbNotch = {
+			radius: Number($('#thumbNotch_radius').val()),
+			offset: Number($('#thumbNotch_offset').val())
+		};
+
+		var background = {
+			color: $('#background_color').val(),
+			bleed: Number($('#background_bleed').val())
+		};
+
+		return tuckbox.createDoc(
+			paper,
+			margin,
+			docUnits,
+			card,
+			insideBuffer,
+			materialThickness,
+			topFlapTongue,
+			sideFlap,
+			bottomFlap,
+			topTab,
+			bottomTab,
+			backSlits,
+			lockSlits,
+			thumbNotch,
+			background);
+	}
+
+	function updatePreview() {
+		var $preview = $('#preview');
+	
+		if ($('#paperForm').valid()) {
+			var paper = {
+				height: Number($('#paper_height').val()),
+				width: Number($('#paper_width').val())
+			};
+
+			$preview.attr('height', $preview.attr('width') * ( paper.height / paper.width));
+		
+			var doc = generateDoc();
+
+			$('#doc').val(doc);
+
+			var $svg = $(doc).filter('svg');
+
+			$preview.attr('viewBox', $svg.attr('viewBox')).html($svg.find('g'));
+
+			//$('#preview').find('#layer-background').hide();
+		}
+	}
+
+	$('input, select').on('input change', function() {
+		var $field = $(this);
+		
+		if ($field.is('.update_topTabTaperTypeSCurveExtraLength')) {
+			updateTopTabTaperTypeSCurveExtraLength();
+		};
+	
+		updatePreview();
+	});
+
+	$('select').on('change', function() {
+		updatePreview();
+	});
+
+	$('#previewButton').click(function() {
+		updatePreview();
+	});
+
+	$('#generateButton').click(function() {
+		updatePreview();
+		download($('#doc').val(), 'tuck.svg', 'text/plain');
+	});
+
+	$('#paperForm').validate({
+		showErrors: function(errorMap, errors) {
+			$('.label').removeClass('error');
+			$.each(errors, function(i, error) {
+				var $element = $(error.element),
+					message = error.message;
+				$element.closest('.field').find('.label').addClass('error');
+			});
+		}
+	});
+
+	updateTopTabTaperTypeSCurveExtraLength();
+	updatePreview();
+});
+</script>
+</head>
+
+<body id="page_tuckbox">
+
+<div id="body">
+	<div id="settings">
+		<form id="paperForm">
+
+		<fieldset id="paperFieldGroup">
+			<legend>Paper</legend>
+
+			<fieldset id="paperSizeFieldGroup">
+				<legend>Size</legend>
+				<div class="field">
+					<label>
+						<span class="label">Type</span>
+						<select id="paper_type">
+							<option value="">Custom</option>
+							<option value="A4">A4</option>
+							<option value="LETTER" selected>Letter</option>
+							<option value="LEGAL">Legal</option>
+							<option value="TABLOID">11 x 17</option>
+						</select>
+					</label>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Units</span>
+						<select id="paper_units_select">
+							<option value="INCHES">Inches</option>
+							<option value="MM">Millimeters</option>
+						</select>
+						<input id="paper_units" type="hidden" />
+					</label>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Width</span>
+						<input data-rule-number=”true” id="paper_width" name="paper_width" required type="text" value="" />
+					</label>
+					<span class="units"></span>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Height</span>
+						<input data-rule-number=”true” id="paper_height" name="paper_height" required type="text" value="" />
+					</label>
+					<span class="units"></span>
+				</div>
+			</fieldset>
+
+			<fieldset id="paperMarginsFieldGroup">
+				<legend>Margins</legend>
+				<div class="field">
+					<label>
+						<span class="label">Top</span>
+						<input id="paper_margin_top" type="text" value=".25" />
+					</label>
+					<span class="units"></span>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Left</span>
+						<input id="paper_margin_left" type="text" value=".25" />
+					</label>
+					<span class="units"></span>
+				</div>
+			</fieldset>
+		</fieldset>
+
+		</form>
+
+		<fieldset id="documentFieldGroup">
+			<legend>Document</legend>
+
+			<div class="field">
+				<label>
+					<span class="label">Units</span>
+					<select id="doc_units">
+						<option value="INCHES">Inches</option>
+						<option value="MM" selected>Millimeters</option>
+					</select>
+				</label>
+			</div>
+		</fieldset>
+
+		<div id="imageFieldGroup">
+			<fieldset id="boxSizeFieldGroup">
+				<legend>Box Size</legend>
+
+				<fieldset id="cardDimensionsFieldGroup">
+					<legend>Card Dimensions</legend>
+					<div class="field">
+						<label>
+							<span class="label">Width</span>
+							<input id="card_width" type="text" value="64" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Height</span>
+							<input id="card_height" type="text" value="90" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Stack Depth</span>
+							<input id="card_depth" type="text" value="20" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="cardInsideBufferFieldGroup">
+					<legend>Inside Buffer</legend>
+					<div class="field">
+						<label>
+							<span class="label">Width</span>
+							<input id="insideBuffer_width" type="text" value="1.5" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Height</span>
+							<input id="insideBuffer_height" type="text" value="1.5" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Depth</span>
+							<input id="insideBuffer_depth" type="text" value="1.5" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="cardMaterialFieldGroup">
+					<legend>Material</legend>
+					<div class="field">
+						<label>
+							<span class="label">Thickness</span>
+							<input id="material_thickness" type="text" value="0.5" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+			</fieldset>
+
+			<fieldset id="flapsFieldGroup">
+				<legend>Flaps</legend>
+				<fieldset id="topFlapFieldGroup">
+					<legend>Top Flap Tongue</legend>
+					<div class="field">
+						<label>
+							<span class="label">Length</span>
+							<input id="topFlapTongue_length" type="text" value="22" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Curve Width</span>
+							<input id="topFlapTongue_curveWidth" type="text" value="16" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="sideFlapFieldGroup">
+					<legend>Side Flap</legend>
+					<div class="field">
+						<label>
+							<span class="label">Gap</span>
+							<input id="sideFlap_gap" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="sideFlap_taperWidth" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="bottomFlapFieldGroup">
+					<legend>Bottom Flap</legend>
+					<div class="field">
+						<label>
+							<span class="label">Gap</span>
+							<input id="bottomFlap_gap" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="bottomFlap_taperWidth" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+			</fieldset>
+
+			<fieldset id="tabsFieldGroup">
+				<legend>Tabs</legend>
+				<fieldset id="topTabsFieldGroup">
+					<legend>Top Tabs</legend>
+					<div class="field">
+						<label>
+							<span class="label">Length</span>
+							<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_length" type="text" value="18" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Corner Radius</span>
+							<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_cornerRadius" type="text" value="4" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="topTab_taperWidth" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Type</span>
+							<select class="update_topTabTaperTypeSCurveExtraLength" id="topTab_taperType">
+								<option value="SIMPLE">Simple</option>
+								<option value="S_CURVE"selected>S-Curve</option>
+							</select>
+						</label>
+					</div>
+					<div class="field for_topTabTaperTypeSCurve">
+						<label>
+							<span class="label">Catch Length</span>
+							<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_catchLength" type="text" value="6" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field for_topTabTaperTypeSCurve">
+						<label>
+							<span class="label">Curve Length</span>
+							<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_curveLength" type="text" value="4" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field for_topTabTaperTypeSCurve">
+						<label>
+							<span class="label">Extra Length</span>
+							<input class="readonly" id="topTab_extraLength" readonly type="text" value="" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="bottomTabsFieldGroup">
+					<legend>Bottom Tabs</legend>
+					<div class="field">
+						<label>
+							<span class="label">Length</span>
+							<input id="bottomTab_length" type="text" value="18" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="bottomTab_taperWidth" type="text" value="2" />
+							<span class="units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Corner Radius</span>
+							<input id="bottomTab_cornerRadius" type="text" value="4" />
+							<span class="units"></span>
+						</label>
+					</div>
+				</fieldset>
+			</fieldset>
+
+			<fieldset id="backSlitsFieldGroup">
+				<legend>Back Slits</legend>
+				<div class="field">
+					<label>
+						<span class="label">Length</span>
+						<input id="backSlits_length" type="text" value="8" />
+					</label>
+				</div>
+			</fieldset>
+
+			<fieldset id="lockSlitsFieldGroup">
+				<legend>Lock Slits</legend>
+				<div class="field">
+					<label>
+						<span class="label">Length</span>
+						<input id="lockSlits_length" type="text" value="0" />
+					</label>
+				</div>
+			</fieldset>
+
+			<fieldset id="thumbNotchFieldGroup">
+				<legend>Thumb Notch</legend>
+				<div class="field">
+					<label>
+						<span class="label">Radius</span>
+						<input id="thumbNotch_radius" type="text" value="9" />
+					</label>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Offset</span>
+						<input id="thumbNotch_offset" type="text" value="2" />
+					</label>
+				</div>
+			</fieldset>
+
+			<fieldset id="backgroundFieldGroup">
+				<legend>Background</legend>
+				<div class="field">
+					<label>
+						<span class="label">Color</span>
+						<input id="background_color" type="text" value="rgb(161,161,161)" />
+					</label>
+				</div>
+				<div class="field">
+					<label>
+						<span class="label">Bleed</span>
+						<input id="background_bleed" type="text" value="2" />
+					</label>
+				</div>
+			</fieldset>
+		</div>
+
+		<div id="buttonGroup">
+			<button id="previewButton" type="button">Preview</button>
+			<button id="generateButton" type="button">Generate</button>
+		</div>
+	</div>
+
+	<div id="previewContainer">
+		<svg id="preview" height="600" viewBox="0 0 0 0" width="400"></svg>
+	</div>
+</div>
+
+<div>
+	<textarea id="doc" style="width: 1000px; height: 500px;"></textarea>
+</div>
+
+</body> 
+</html>
