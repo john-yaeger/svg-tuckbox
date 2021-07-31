@@ -90,7 +90,7 @@
 
 		return path;
 	}
-	
+
 	// length
 	// cornerRadius
 	// taperWidth
@@ -145,7 +145,7 @@
 
 		return path;
 	};
-	
+
 	function createTopTab2(settings, fromPos, toPos) {
 		const catchLength = settings.catchLength,
 			cornerRadius = settings.cornerRadius,
@@ -291,8 +291,8 @@
 
 				const backgroundLayer = svgDoc.addChild(Svg.Inkscape.createLayerElement('layer-background', 'Background'));
 
-				const bgBrush = new Svg.Brush('background', background.color),
-					whiteBrush = new Svg.Brush('background', '#FFFFFF');
+				const bgBrush = new Svg.Brush(background.color),
+					whiteBrush = new Svg.Brush('#FFFFFF');
 
 				backgroundLayer.addChildren(
 					new Svg.Path({ x: x2 - bgBleed, y: y1 - bgBleed })
@@ -350,7 +350,7 @@
 
 			const outlineLayer = svgDoc.addChild(Svg.Inkscape.createLayerElement('layer-outline', 'Outline'));
 
-			const outlinePen = new Svg.Pen('outline', outlineSettings.pen.width, outlineSettings.pen.color);
+			const outlinePen = new Svg.Pen(outlineSettings.pen.width, outlineSettings.pen.color);
 
 			const path = new Svg.Path({ x: x2, y: y1 });
 
@@ -415,8 +415,8 @@
 
 			const alignmentLayer = svgDoc.addChild(Svg.Inkscape.createLayerElement('layer-alignment', 'Alignment', { hidden: true }));
 
-			const alignmentBrush1 = new Svg.Brush('alignment1', '#cccccc'),
-				alignmentBrush2 = new Svg.Brush('alignment2', '#aaaaaa');
+			const alignmentBrush1 = new Svg.Brush('#cccccc'),
+				alignmentBrush2 = new Svg.Brush('#aaaaaa');
 
 			alignmentLayer.addChildren(
 				alignmentBrush1.createRectElement(x1, y2, x2, y3), // Bottom
@@ -441,7 +441,7 @@
 
 			const guideLayer = svgDoc.addChild(Svg.Inkscape.createLayerElement('layer-guide', 'Guide'));
 
-			const guidePen = new Svg.Pen('guide', outlineSettings.pen.width, outlineSettings.pen.color); // TODO
+			const guidePen = new Svg.Pen(outlineSettings.pen.width, outlineSettings.pen.color); // TODO
 
 			guideLayer.addChildren(
 				guidePen.createHLineElement(y1, guideBox.left, x2 - bottomTab.length - guideGap),

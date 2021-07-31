@@ -53,8 +53,8 @@ jQuery(function($) {
 			a.click();
 			setTimeout(function() {
 				document.body.removeChild(a);
-				window.URL.revokeObjectURL(url);  
-			}, 0); 
+				window.URL.revokeObjectURL(url);
+			}, 0);
 		}
 	}
 
@@ -62,7 +62,7 @@ jQuery(function($) {
 		$inputs.each(function() {
 			const $input = $(this),
 				currentUnits = $input.data('units');
-				
+
 			if (currentUnits && (currentUnits !== toUnits)) {
 			console.log(typeof currentUnits);
 				const storedValue = $input.data('storedValue');
@@ -128,7 +128,7 @@ jQuery(function($) {
 
 	$('#topTab_taperType').change(function() {
 		const taperType = tuckbox.TAPER_TYPES[$(this).val()];
-		
+
 		if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
 			$('#topTabsFieldGroup').find('.field.for_topTabTaperTypeSCurve').prop('disabled', false).closest('.field').slideDown('fast');
 		} else {
@@ -249,7 +249,7 @@ jQuery(function($) {
 
 	function updatePreview() {
 		const $preview = $('#preview');
-	
+
 		if ($('#paperForm').valid()) {
 			const paper = {
 				height: Number($('#paper_height').val()),
@@ -257,7 +257,7 @@ jQuery(function($) {
 			};
 
 			$preview.attr('height', $preview.attr('width') * ( paper.height / paper.width));
-		
+
 			const doc = generateDoc();
 
 			$('#doc').val(doc);
@@ -272,11 +272,11 @@ jQuery(function($) {
 
 	$('input, select').on('input change', function() {
 		const $field = $(this);
-		
+
 		if ($field.is('.update_topTabTaperTypeSCurveExtraLength')) {
 			updateTopTabTaperTypeSCurveExtraLength();
 		};
-	
+
 		updatePreview();
 	});
 
@@ -683,5 +683,5 @@ jQuery(function($) {
 	<textarea id="doc" style="width: 1000px; height: 500px;"></textarea>
 </div>
 
-</body> 
+</body>
 </html>

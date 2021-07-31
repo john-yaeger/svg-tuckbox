@@ -9,7 +9,7 @@
 	class Units {
 		static INCHES = new Units('INCHES', 'Inches', 'in', 1000, { MM: { n: 254, d: 10 } });
 		static MM = new Units('MM', 'Millimeters', 'mm', 10, { INCHES: { n: 10, d: 254 } });
-		
+
 		static fromId = function(id) {
 			switch(id) {
 				case Units.INCHES.id: return Units.INCHES;
@@ -68,7 +68,7 @@
 		title = title || id;
 		options = options || {};
 		return new Svg.Element('g')
-			.setAttrs({
+			.addAttrs({
 				'id': id,
 				'style': 'display:' + (!!options.hidden ? 'none': 'inline'),
 				'inkscape:groupmode': 'layer',
@@ -77,7 +77,7 @@
 
 	function createSvgElement(id, paper, docUnits, title) {
 		return new Svg.Element('svg')
-			.setAttrs({
+			.addAttrs({
 				'xmlns:dc': 'http://purl.org/dc/elements/1.1/',
 				'xmlns:cc': 'http://creativecommons.org/ns#',
 				'xmlns:rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -99,7 +99,7 @@
 	}
 
 	// *** Class: Document ***
-	
+
 	class Document {
 		constructor(id, paper, docUnits, title) {
 			this.svgElement = createSvgElement(id, paper, docUnits, title);

@@ -7,6 +7,21 @@
 
 	// *** Private Functions ***
 
+	function extend(/* object... */) {
+		for (let i = 1; i < arguments.length; i++) {
+			for (let key in arguments[i]) {
+				if (arguments[i].hasOwnProperty(key)) {
+					arguments[0][key] = arguments[i][key];
+				}
+			}
+		}
+		return arguments[0];
+	}
+
+	function forceArray(arg) {
+		return Array.isArray(arg) ? arg : [arg];
+	}
+
 	function repeatString(s, times) {
 		let text = '';
 		for (let i = 0; i < times; i++) {
@@ -15,36 +30,18 @@
 		return text;
 	}
 
+	function getSegments(pathOrSegments) {
+		return (pathOrSegments instanceof Path)
+			? pathOrSegments.segments
+			: forceArray(pathOrSegments);
+	}
+
 	function styleMapToString(styleMap) {
 		const tokens = [];
 		for (const [name, value] of Object.entries(styleMap)) {
 			tokens.push(name + ':' + value);
 		}
 		return tokens.join(';');
-	}
-
-	function createBrushStyleMap(color) {
-		return {
-			'fill': color,
-			'fill-opacity': 1,
-			'fill-rule': 'evenodd',
-			'stroke': 'none',
-			'stroke-width': 0,
-			'stroke-opacity': 1
-		};
-	}
-
-	function createPenStyleMap(width, color) {
-		return {
-			'fill': 'none',
-			'stroke': color,
-			'stroke-width': width,
-			'stroke-linecap': 'butt',
-			'stroke-linejoin': 'miter',
-			'stroke-miterlimit': 4,
-			'stroke-dasharray': 'none',
-			'stroke-opacity': 1
-		};
 	}
 
 	// *** Public Functions ***
@@ -68,120 +65,11 @@
 		return new Pos((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2);
 	};
 
-	// *** Class: DrawingTool ***
-	
-	class DrawingTool {
-		constructor(idPrefix) {
-			this.idPrefix = idPrefix;
-			
-			this._idIndex = 0;
-		}
-
-		_nextId() {
-			return this.idPrefix + '-' + this._idIndex++;
-		}
-
-		createPathElementForSegments(segments, attrs) {
-			const commands = PathSegment.createCommands(segments);
-
-			return this.createPathElementFromCommands(commands, attrs);
-		}
-
-		createPathElementFromCommands(commands, attrs) {
-			const path = new Element('path');
-
-			path.setAttr('id', this._nextId());
-			path.setAttr('d', commands);
-			path.setAttr('style', this.style);
-
-			if (attrs) {
-				for (const [name, value] of Object.entries(attrs)) {
-					path.setAttr(name, value);
-				}
-			}
-
-			return path;
-		}
-	}
-
-	// *** Class: Pen ***
-
-	class Pen extends DrawingTool {
-		constructor(idPrefix, width, color) {
-			super(idPrefix);
-			
-			this.style = styleMapToString(createPenStyleMap(width, color));
-		}
-
-		createCircleElement(origin, radius) {
-			return new Element('circle')
-				.setAttr('style', this.style)
-				.setAttr('cx', origin.x)
-				.setAttr('cy', origin.y)
-				.setAttr('r', radius);
-		}
-
-		createCirclePathElement(origin, radius) {
-			return new Path({ x: origin.x - radius, y: origin.y })
-				.addArcTo({ x: origin.x + radius, y: origin.y }, { rx: radius, ry: radius }, 1)
-				.addArcTo({ x: origin.x - radius, y: origin.y }, { rx: radius, ry: radius }, 1)
-				.createElement(this);
-		}
-
-		createLineElement(pos1, pos2) {
-			return new Element('line')
-				.setAttr('style', this.style)
-				.setAttr('x1', pos1.x)
-				.setAttr('y1', pos1.y)
-				.setAttr('x2', pos2.x)
-				.setAttr('y2', pos2.y);
-		}
-
-		createHLineElement(y, fromX, toX) {
-			return this.createLineElement({ x: fromX, y: y }, { x: toX, y: y });
-		}
-
-		createVLineElement(x, fromY, toY) {
-			return this.createLineElement({ x: x, y: fromY }, { x: x, y: toY });
-		}
-
-		createHLinePathElement(y, fromX, toX) {
-			return new Path({ x: fromX, y: y })
-				.addHLineTo(toX)
-				.createElement(this);
-		}
-
-		createVLinePathElement(x, fromY, toY) {
-			return new Path({ x: x, y: fromY })
-				.addVLineTo(toY)
-				.createElement(this);
-		}
-	};
-
-	// *** Class: Brush ***
-
-	class Brush extends DrawingTool {
-		constructor(idPrefix, color) {
-			super(idPrefix);
-			
-			this.style = styleMapToString(createBrushStyleMap(color));
-		}
-
-		createRectElement(x1, y1, x2, y2) {
-			return new Element('rect')
-				.setAttr('style', this.style)
-				.setAttr('x', x1)
-				.setAttr('y', y1)
-				.setAttr('width', x2 - x1)
-				.setAttr('height', y2 - y1);
-		}
-	};
-
 	// *** Class: Element ***
 
 	class Element {
 		constructor(name) {
-			this.attrs = {};
+			this.attrMap = {};
 			this.children = [];
 			this.name = name;
 			this.text = null;
@@ -204,14 +92,12 @@
 		}
 
 		setAttr(name, value) {
-			this.attrs[name] = value;
+			this.attrMap[name] = value;
 			return this;
 		}
 
-		setAttrs(attrMap) {
-			for (const [name, value] of Object.entries(attrMap)) {
-				this.attrs[name] = value;
-			}
+		addAttrs(attrMap) {
+			extend(this.attrMap, attrMap);
 			return this;
 		}
 
@@ -224,11 +110,11 @@
 			level = level || 0;
 
 			const indent = repeatString(INDENT, level);
-			
+
 			let text = indent + '<' + this.name;
 
-			if (Object.keys(this.attrs).length > 0) {
-				for (const [name, value] of Object.entries(this.attrs)) {
+			if (Object.keys(this.attrMap).length > 0) {
+				for (const [name, value] of Object.entries(this.attrMap)) {
 					text += '\n' + indent + ATTR_INDENT + name + '="' + value + '"';
 				}
 			}
@@ -249,11 +135,154 @@
 		}
 	}
 
+	Element.createStyled = function(name, styleMap, attrMap, /*optional*/ optionalAttrMap) {
+		return new Element(name)
+			.setAttr('style', styleMapToString(styleMap))
+			.addAttrs(extend(attrMap, optionalAttrMap));
+	}
+
+	Element.createLine = function(pos1, pos2, styleMap, /*optional*/ attrMap) {
+		return Element.createStyled('line', styleMap, {
+				'x1': pos1.x,
+				'y1': pos1.y,
+				'x2': pos2.x,
+				'y2': pos2.y
+			}, attrMap);
+	}
+
+	Element.createHLine = function(y, fromX, toX, styleMap, /*optional*/ attrMap) {
+		return Element.createLine({ x: fromX, y: y }, { x: toX, y: y }, styleMap, attrMap);
+	}
+
+	Element.createVLine = function(x, fromY, toY, styleMap, /*optional*/ attrMap) {
+		return Element.createLine({ x: x, y: fromY }, { x: x, y: toY }, styleMap, attrMap);
+	}
+
+	Element.createCircle = function(origin, radius, styleMap, /*optional*/ attrMap) {
+		return Element.createStyled('circle', styleMap, {
+				'cx': origin.x,
+				'cy': origin.y,
+				'r': radius
+			}, attrMap);
+	}
+
+	Element.createRect = function(x1, y1, x2, y2, styleMap, /*optional*/ attrMap) {
+		return Element.createStyled('rect', styleMap, {
+				'x': x1,
+				'y': y1,
+				'width': x2 - x1,
+				'height': y2 - y1
+			}, attrMap);
+	}
+
+	Element.createPath = function(pathOrSegments, styleMap, /*optional*/ attrMap) {
+		const commands = PathSegment.createCommands(getSegments(pathOrSegments));
+
+		return Element.createPathFromCommands(commands, styleMap, attrMap);
+	}
+
+	Element.createPathFromCommands = function(commands, styleMap, /*optional*/ attrMap) {
+		return Element.createStyled('path', styleMap, {
+				'd': commands
+			}, attrMap);
+	}
+
+	Element.createStyled = function(name, styleMap, attrMap) {
+		return new Element(name)
+			.setAttr('style', styleMapToString(styleMap))
+			.addAttrs(attrMap);
+	}
+
+	// *** Class: DrawingTool ***
+
+	class DrawingTool {
+		constructor() {}
+	}
+
+	DrawingTool.createCombinedStyleMap = function(/* drawingTool... */) {
+		let styleMaps = Array.from(arguments).map(drawingTool => drawingTool.styleMap);
+
+		return extend({}, ...styleMaps);
+	}
+
+	// *** Class: Pen ***
+
+	class Pen extends DrawingTool {
+		constructor(width, color) {
+			super();
+
+			this.styleMap = Pen.createStyleMap(width, color);
+		}
+
+		createCircleElement(origin, radius, /*optional*/ attrMap) {
+			return Element.createCircle(origin, radius, this.styleMap, attrMap);
+		}
+
+		createCirclePathElement(origin, radius, /*optional*/ attrMap) {
+			return new Path({ x: origin.x - radius, y: origin.y })
+				.addArcTo({ x: origin.x + radius, y: origin.y }, { rx: radius, ry: radius }, 1)
+				.addArcTo({ x: origin.x - radius, y: origin.y }, { rx: radius, ry: radius }, 1)
+				.createElement(this, attrMap);
+		}
+
+		createLineElement(pos1, pos2, /*optional*/ attrMap) {
+			return Element.createLine(pos1, pos2, this.styleMap, attrMap);
+		}
+
+		createHLineElement(y, fromX, toX, /*optional*/ attrMap) {
+			return Element.createHLine(y, fromX, toX, this.styleMap, attrMap);
+		}
+
+		createVLineElement(x, fromY, toY, /*optional*/ attrMap) {
+			return Element.createVLine(x, fromY, toY, this.styleMap, attrMap);
+		}
+
+		createHLinePathElement(y, fromX, toX, /*optional*/ attrMap) {
+			return new Path({ x: fromX, y: y })
+				.addHLineTo(toX)
+				.createElement(this, attrMap);
+		}
+
+		createVLinePathElement(x, fromY, toY, /*optional*/ attrMap) {
+			return new Path({ x: x, y: fromY })
+				.addVLineTo(toY)
+				.createElement(this, attrMap);
+		}
+	};
+
+	Pen.createStyleMap = function(width, color, /*optional*/ styleMap) {
+		return extend({}, {
+				'fill': 'none',
+				'stroke': color,
+				'stroke-width': width
+			}, styleMap );
+	}
+
+	// *** Class: Brush ***
+
+	class Brush extends DrawingTool {
+		constructor(color) {
+			super();
+
+			this.styleMap = Brush.createStyleMap(color);
+		}
+
+		createRectElement(x1, y1, x2, y2, attrMap) {
+			return Element.createRect(x1, y1, x2, y2, this.styleMap, attrMap);
+		}
+	};
+
+	Brush.createStyleMap = function(color, /*optional*/ styleMap) {
+		return extend({}, {
+				'fill': color
+			}, styleMap );
+	}
+
 	// *** Class: PathSegment ***
 
 	class PathSegment {
 		constructor() {}
-		
+
 		command() {
 			throw 'Abstract Method';
 		}
@@ -262,9 +291,9 @@
 			throw 'Abstract Method';
 		}
 	}
-	
+
 	PathSegment.createCommands = function(segments) {
-		segments = Array.isArray(segments) ? segments : [segments];
+		segments = forceArray(segments);
 
 		const commands = [];
 
@@ -522,7 +551,7 @@
 
 	// *** Class: Path
 
-	function Path(startPos) {
+	function Path(/*optional*/ startPos) {
 		this.segments = [];
 
 		if (startPos) {
@@ -532,66 +561,62 @@
 
 	Path.prototype = {
 		add: function(pathOrSegments) {
-			const segmentsToAdd = (pathOrSegments instanceof Path)
-				? pathOrSegments.segments
-				: Array.isArray(pathOrSegments) ? pathOrSegments : [pathOrSegments];
-
-			this.segments.push.apply(this.segments, segmentsToAdd);
+			this.segments.push.apply(this.segments, getSegments(pathOrSegments));
 			return this;
 		},
-		
+
 		addMoveTo: function(toPos) {
 			return this.add(new PathSegment.MoveTo(toPos));
 		},
-		
+
 		addHMoveTo: function(toX) {
 			return this.add(new PathSegment.HMoveTo(toX));
 		},
-		
+
 		addVMoveTo: function(toY) {
 			return this.add(new PathSegment.VMoveTo(toY));
 		},
-		
+
 		addLineBy: function(dim) {
 			return this.add(new PathSegment.LineBy(dim));
 		},
-		
+
 		addHLineBy: function(cx) {
 			return this.add(new PathSegment.HLineBy(cx));
 		},
-		
+
 		addVLineBy: function(cy) {
 			return this.add(new PathSegment.VLineBy(cy));
 		},
-		
+
 		addLineTo: function(toPos) {
 			return this.add(new PathSegment.LineTo(toPos));
 		},
-		
+
 		addHLineTo: function(toX) {
 			return this.add(new PathSegment.HLineTo(toX));
 		},
-		
+
 		addVLineTo: function(toY) {
 			return this.add(new PathSegment.VLineTo(toY));
 		},
-		
+
 		addArcBy: function(dim, radii, dir) {
 			return this.add(new PathSegment.ArcBy(dim, radii, dir));
 		},
-		
+
 		addArcTo: function(toPos, radii, dir) {
 			return this.add(new PathSegment.ArcTo(toPos, radii, dir));
 		},
-		
+
 		addCubicBezierBy: function(dim, dim1, dim2) {
 			return this.add(new PathSegment.CubicBezierBy(dim, dim1, dim2));
 		},
-		
+
 		addCubicBezierTo: function(toPos, pt1, pt2) {
 			return this.add(new PathSegment.CubicBezierTo(toPos, pt1, pt2));
 		},
-		
+
 		addHorizSCurve: function(cx, cy) {
 			if (Math.abs(cx) > Math.abs(cy)) {
 				const cxSign = Math.sign(cx),
@@ -618,8 +643,12 @@
 			return PathSegment.createCommands(this.segments);
 		},
 
-		createElement(drawingTool, attrs) {
-			return drawingTool.createPathElementForSegments(this.segments, attrs);
+		createElement(drawingTools, /*optional*/ attrMap) {
+			drawingTools = forceArray(drawingTools);
+
+			const styleMap = DrawingTool.createCombinedStyleMap(...drawingTools);
+
+			return Element.createPath(this.segments, styleMap, attrMap);
 		}
 	};
 
