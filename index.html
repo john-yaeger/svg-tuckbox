@@ -3,17 +3,21 @@
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Tuck Box</title>
 
 <link href="resources/css/tuckbox.css" rel="stylesheet" type="text/css" />
 
 <script src="resources/js/jquery-3.1.1.js"></script>
 <script src="resources/js/jquery.validate.js"></script>
+<script src="resources/js/svg.js"></script>
+<script src="resources/js/svg-inkscape.js"></script>
 <script src="resources/js/tuckbox.js"></script>
 
 <script type="text/javascript">
 jQuery(function($) {
-	var PAPER_TYPES = {
+	const PAPER_TYPES = {
 		A4: {
 			height: '297',
 			units: Units.MM,
@@ -37,11 +41,11 @@ jQuery(function($) {
 	};
 
 	function download(data, filename, type) {
-		var file = new Blob([data], {type: type});
+		const file = new Blob([data], {type: type});
 		if (window.navigator.msSaveOrOpenBlob) // IE10+
 			window.navigator.msSaveOrOpenBlob(file, filename);
 		else { // Others
-			var a = document.createElement('a'),
+			const a = document.createElement('a'),
 					url = URL.createObjectURL(file);
 			a.href = url;
 			a.download = filename;
@@ -56,14 +60,15 @@ jQuery(function($) {
 
 	function changeUnits($inputs, toUnits) {
 		$inputs.each(function() {
-			var $input = $(this),
+			const $input = $(this),
 				currentUnits = $input.data('units');
-
-			if (currentUnits && !currentUnits.equals(toUnits)) {
-				var storedValue = $input.data('storedValue');
-				$input.val(((storedValue) && storedValue.units.equals(toUnits))
+				
+			if (currentUnits && (currentUnits !== toUnits)) {
+			console.log(typeof currentUnits);
+				const storedValue = $input.data('storedValue');
+				$input.val((storedValue && (storedValue.units === toUnits))
 					? storedValue.value
-					: toUnits.convert($input.val(), currentUnits));
+					: toUnits.convert(Number($input.val()), currentUnits));
 			}
 
 			$input.data('units', toUnits).closest('.field').find('.units').text(toUnits.abbrev);
@@ -78,12 +83,12 @@ jQuery(function($) {
 	}
 
 	function updateTopTabTaperTypeSCurveExtraLength() {
-		var taperType = tuckbox.TAPER_TYPES[$('#topTab_taperType').val()];
+		const taperType = tuckbox.TAPER_TYPES[$('#topTab_taperType').val()];
 
 		console.log('taperType: ' + taperType);
 
 		if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
-			var catchLength = Number($('#topTab_catchLength').val()),
+			const catchLength = Number($('#topTab_catchLength').val()),
 				cornerRadius = Number($('#topTab_cornerRadius').val()),
 				curveLength = Number($('#topTab_curveLength').val()),
 				length = Number($('#topTab_length').val());
@@ -95,9 +100,9 @@ jQuery(function($) {
 	}
 
 	$('#paper_type').change(function() {
-		var code = $(this).val();
+		const code = $(this).val();
 		if (code != '') {
-			var paperType = PAPER_TYPES[code];
+			const paperType = PAPER_TYPES[code];
 			$('#paper_units_select').prop('disabled', true).addClass('readonly').val(paperType.units.id).change();
 			$('#paper_height').prop('readonly', true).val(paperType.height).change();
 			$('#paper_width').prop('readonly', true).val(paperType.width).change();
@@ -108,22 +113,21 @@ jQuery(function($) {
 		}
 	}).change();
 
-	var $paperInputs = $('#paperSizeFieldGroup, #paperMarginsFieldGroup').find('.units').closest('.field').find('input'),
+	const $paperInputs = $('#paperSizeFieldGroup, #paperMarginsFieldGroup').find('.units').closest('.field').find('input'),
 		$imageInputs = $('#imageFieldGroup').find('.units').closest('.field').find('input');
 
-
 	$('#paper_units_select').change(function() {
-		var val = $(this).val();
+		const val = $(this).val();
 		$('#paper_units').val(val);
-		changeUnits($paperInputs, Units(val));
+		changeUnits($paperInputs, Units.fromId(val));
 	}).change();
 
 	$('#doc_units').change(function() {
-		changeUnits($imageInputs, Units($(this).val()));
+		changeUnits($imageInputs, Units.fromId($(this).val()));
 	}).change();
 
 	$('#topTab_taperType').change(function() {
-		var taperType = tuckbox.TAPER_TYPES[$(this).val()];
+		const taperType = tuckbox.TAPER_TYPES[$(this).val()];
 		
 		if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
 			$('#topTabsFieldGroup').find('.field.for_topTabTaperTypeSCurve').prop('disabled', false).closest('.field').slideDown('fast');
@@ -132,67 +136,67 @@ jQuery(function($) {
 		}
 	}).change();
 
-	$paperInputs.data('units', Units($('#paper_units').val())).each(function() {
+	$paperInputs.data('units', Units.fromId($('#paper_units').val())).each(function() {
 		updateStoredValue($(this));
 	}).change(function() {
 		updateStoredValue($(this));
 	});
 
-	$imageInputs.data('units', Units($('#doc_units').val())).each(function() {
+	$imageInputs.data('units', Units.fromId($('#doc_units').val())).each(function() {
 		updateStoredValue($(this));
 	}).change(function() {
 		updateStoredValue($(this));
 	});
 
 	function generateDoc() {
-		var paperUnits = Units($('#paper_units').val()),
-			docUnits = Units($('#doc_units').val());
+		const paperUnits = Units.fromId($('#paper_units').val()),
+			docUnits = Units.fromId($('#doc_units').val());
 
 		function getUserUnits(val) {
 			return Units.MM.convert(Number(val), docUnits);
 		}
 
-		var paper = {
+		const paper = {
 			height: Number($('#paper_height').val()),
 			units: paperUnits,
 			width: Number($('#paper_width').val())
 		};
 
-		var margin = {
+		const margin = {
 			left: Number($('#paper_margin_left').val()),
 			top: Number($('#paper_margin_top').val()),
 		};
 
-		var card = {
+		const card = {
 			height: getUserUnits($('#card_height').val()),
 			depth: getUserUnits($('#card_depth').val()),
 			width: getUserUnits($('#card_width').val())
 		};
 
-		var insideBuffer = {
+		const insideBuffer = {
 			depth: getUserUnits($('#insideBuffer_depth').val()),
 			height: getUserUnits($('#insideBuffer_height').val()),
 			width: getUserUnits($('#insideBuffer_width').val())
 		};
 
-		var materialThickness = getUserUnits($('#material_thickness').val());
+		const materialThickness = getUserUnits($('#material_thickness').val());
 
-		var topFlapTongue = {
+		const topFlapTongue = {
 			curveWidth: getUserUnits($('#topFlapTongue_curveWidth').val()),
 			length: getUserUnits($('#topFlapTongue_length').val())
 		};
 
-		var sideFlap = {
+		const sideFlap = {
 			gap: getUserUnits($('#sideFlap_gap').val()),
 			taperWidth: getUserUnits($('#sideFlap_taperWidth').val())
 		};
 
-		var bottomFlap = {
+		const bottomFlap = {
 			gap: getUserUnits($('#bottomFlap_gap').val()),
 			taperWidth: getUserUnits($('#bottomFlap_taperWidth').val())
 		};
 
-		var topTab = {
+		const topTab = {
 			catchLength: getUserUnits($('#topTab_catchLength').val()),
 			cornerRadius: getUserUnits($('#topTab_cornerRadius').val()),
 			curveLength: getUserUnits($('#topTab_curveLength').val()),
@@ -201,26 +205,26 @@ jQuery(function($) {
 			taperWidth: getUserUnits($('#topTab_taperWidth').val())
 		};
 
-		var bottomTab = {
+		const bottomTab = {
 			cornerRadius: getUserUnits($('#bottomTab_cornerRadius').val()),
 			length: getUserUnits($('#bottomTab_length').val()),
 			taperWidth: getUserUnits($('#bottomTab_taperWidth').val())
 		};
 
-		var backSlits = {
+		const backSlits = {
 			length: Number($('#backSlits_length').val())
 		};
 
-		var lockSlits = {
+		const lockSlits = {
 			length: Number($('#lockSlits_length').val())
 		};
 
-		var thumbNotch = {
+		const thumbNotch = {
 			radius: Number($('#thumbNotch_radius').val()),
 			offset: Number($('#thumbNotch_offset').val())
 		};
 
-		var background = {
+		const background = {
 			color: $('#background_color').val(),
 			bleed: Number($('#background_bleed').val())
 		};
@@ -244,21 +248,21 @@ jQuery(function($) {
 	}
 
 	function updatePreview() {
-		var $preview = $('#preview');
+		const $preview = $('#preview');
 	
 		if ($('#paperForm').valid()) {
-			var paper = {
+			const paper = {
 				height: Number($('#paper_height').val()),
 				width: Number($('#paper_width').val())
 			};
 
 			$preview.attr('height', $preview.attr('width') * ( paper.height / paper.width));
 		
-			var doc = generateDoc();
+			const doc = generateDoc();
 
 			$('#doc').val(doc);
 
-			var $svg = $(doc).filter('svg');
+			const $svg = $(doc).filter('svg');
 
 			$preview.attr('viewBox', $svg.attr('viewBox')).html($svg.find('g'));
 
@@ -267,7 +271,7 @@ jQuery(function($) {
 	}
 
 	$('input, select').on('input change', function() {
-		var $field = $(this);
+		const $field = $(this);
 		
 		if ($field.is('.update_topTabTaperTypeSCurveExtraLength')) {
 			updateTopTabTaperTypeSCurveExtraLength();
@@ -293,7 +297,7 @@ jQuery(function($) {
 		showErrors: function(errorMap, errors) {
 			$('.label').removeClass('error');
 			$.each(errors, function(i, error) {
-				var $element = $(error.element),
+				const $element = $(error.element),
 					message = error.message;
 				$element.closest('.field').find('.label').addClass('error');
 			});
@@ -308,7 +312,17 @@ jQuery(function($) {
 
 <body id="page_tuckbox">
 
+<ul class="nav">
+	<li>
+		<a class="active" href="#">Tuckbox</a>
+	</li>
+	<li>
+		<a href="#">Envelope</a>
+	</li>
+</ul>
+
 <div id="body">
+
 	<div id="settings">
 		<form id="paperForm">
 
@@ -602,6 +616,7 @@ jQuery(function($) {
 					<label>
 						<span class="label">Length</span>
 						<input id="backSlits_length" type="text" value="8" />
+						<span class="units"></span>
 					</label>
 				</div>
 			</fieldset>
@@ -612,6 +627,7 @@ jQuery(function($) {
 					<label>
 						<span class="label">Length</span>
 						<input id="lockSlits_length" type="text" value="0" />
+						<span class="units"></span>
 					</label>
 				</div>
 			</fieldset>
@@ -622,12 +638,14 @@ jQuery(function($) {
 					<label>
 						<span class="label">Radius</span>
 						<input id="thumbNotch_radius" type="text" value="9" />
+						<span class="units"></span>
 					</label>
 				</div>
 				<div class="field">
 					<label>
 						<span class="label">Offset</span>
 						<input id="thumbNotch_offset" type="text" value="2" />
+						<span class="units"></span>
 					</label>
 				</div>
 			</fieldset>
@@ -644,6 +662,7 @@ jQuery(function($) {
 					<label>
 						<span class="label">Bleed</span>
 						<input id="background_bleed" type="text" value="2" />
+						<span class="units"></span>
 					</label>
 				</div>
 			</fieldset>
