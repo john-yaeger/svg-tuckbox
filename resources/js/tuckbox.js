@@ -9,193 +9,91 @@
 		}
 	}
 
+	function addTabSideToPath(path, length, dir, xDir, yDir, settings) {
+		const taperType = settings.taperType || tuckbox.TAPER_TYPES.SIMPLE,
+			taperWidth = settings.taperWidth || 0,
+			cornerRadius = settings.cornerRadius || 0,
+			catchLength = settings.catchLength || 0,
+			curveLength = settings.curveLength || 0;
+
+		const radialAdjustment = ((taperWidth > 0) && (taperType !== tuckbox.TAPER_TYPES.S_CURVE)) ? taperWidth : 0;
+
+		if ((dir < 0) && (cornerRadius > 0)) {
+			path.addArcBy(
+				{ cx: -xDir * (cornerRadius - radialAdjustment), cy: yDir * cornerRadius },
+				{ rx: cornerRadius, ry: cornerRadius },
+				(xDir * yDir > 0) ? 1 : 0);
+		}
+
+		if (taperWidth > 0) {
+			const leftOverLength = length - catchLength - curveLength;
+
+			if ((dir > 0) && (catchLength > 0)) {
+				path.addHLineBy(dir * xDir * catchLength);
+			}
+
+			if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
+				if ((dir < 0) && (leftOverLength > 0)) {
+					path.addHLineBy(dir * xDir * leftOverLength);
+				}
+
+				path.addHorizSCurve(dir * xDir * curveLength, yDir * taperWidth);
+
+				if ((dir > 0) && (leftOverLength > 0)) {
+					path.addHLineBy(dir * xDir * leftOverLength);
+				}
+			} else {
+				path.addLineBy({ cx: dir * xDir * (length - catchLength + taperWidth), cy: yDir * taperWidth });
+			}
+
+			if ((dir < 0) && (catchLength > 0)) {
+				path.addHLineBy(dir * xDir * catchLength);
+			}
+		} else {
+			path.addHLineBy(dir * xDir * length);
+		}
+
+		if ((dir > 0) && (cornerRadius > 0)) {
+			path.addArcBy(
+				{ cx: xDir * (cornerRadius - radialAdjustment), cy: yDir * cornerRadius },
+				{ rx: cornerRadius, ry: cornerRadius },
+				(xDir * yDir > 0) ? 1 : 0);
+		}
+	}
+
 	function createTabPath(settings, xDir, yDir, length, toPos) {
 		const catchLength = settings.catchLength || 0,
 			cornerRadius = settings.cornerRadius || 0,
 			curveLength = settings.curveLength || 0,
-			taper1Type = settings.taper1Type || null,
-			taper1Width = settings.taper1Width || 0,
-			taper2Type = settings.taper2Type || null,
-			taper2Width = settings.taper2Width || 0;
+			taper1Type = settings.taper1Type || settings.taperType || null,
+			taper1Width = settings.taper1Width || settings.taperWidth || 0,
+			taper2Type = settings.taper2Type || settings.taperType || null,
+			taper2Width = settings.taper2Width || settings.taperWidth || 0;
 
 		const path = new Svg.Path();
 
-		if (taper1Type && (taper1Width > 0)) {
-			if (taper1Type === tuckbox.TAPER_TYPES.S_CURVE) {
-				const leftOverLength = length - catchLength - curveLength - cornerRadius;
-
-				if (catchLength > 0) {
-					path.addHLineBy(catchLength);
-				}
-
-				path.addHorizSCurve(curveLength, taper1Width);
-
-				if (leftOverLength > 0) {
-					path.addHLineBy(leftOverLength);
-				}
-			} else {
-				path.addLineBy({ cx: xDir * (length - (cornerRadius - taper1Width)), cy: yDir * taper1Width });
-			}
-		} else {
-			path.addHLineBy(xDir * (length - cornerRadius));
-		}
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: xDir * (cornerRadius - taper1Width), cy: yDir * cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
+		addTabSideToPath(path, length - cornerRadius, 1, xDir, yDir, {
+			taperType: taper1Type,
+			taperWidth: taper1Width,
+			cornerRadius: cornerRadius,
+			catchLength: catchLength,
+			curveLength: curveLength
+		});
 
 		path.addVLineTo(toPos.y - yDir * (taper2Width + cornerRadius));
 
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: -xDir * (cornerRadius - taper2Width), cy: yDir * cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
+		addTabSideToPath(path, length - cornerRadius, -1, xDir, yDir, {
+			taperType: taper2Type,
+			taperWidth: taper2Width,
+			cornerRadius: cornerRadius,
+			catchLength: catchLength,
+			curveLength: curveLength
+		});
 
 		path.addLineTo(toPos);
 
 		return path;
 	}
-
-	function createTabPath2(settings, xDir, yDir, toPos) {
-		const cornerRadius = settings.cornerRadius,
-			length = settings.length,
-			taperWidth = settings.taperWidth;
-
-		const path = new Svg.Path();
-
-		path.addLineBy({ cx: xDir * (length - (cornerRadius - taperWidth)), cy: yDir * taperWidth });
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: xDir * (cornerRadius - taperWidth), cy: yDir * cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		path.addVLineTo(toPos.y - yDir * (taperWidth + cornerRadius));
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: -xDir * (cornerRadius - taperWidth), cy: yDir * cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		path.addLineTo(toPos);
-
-		return path;
-	}
-
-	// length
-	// cornerRadius
-	// taperWidth
-	// taperType
-	// catchLength - for S-curve
-	// curveLength - for S-curve
-	function createTopTabPath(settings, fromPos, toPos) {
-		const catchLength = settings.catchLength,
-			cornerRadius = settings.cornerRadius,
-			curveLength = settings.curveLength,
-			length = settings.length,
-			taperType = settings.taperType,
-			taperWidth = settings.taperWidth;
-
-		const isSCurveTaper = (taperWidth > 0) && (taperType === tuckbox.TAPER_TYPES.S_CURVE);
-
-		const path = new Svg.Path();
-
-		path.addHLineBy(length - cornerRadius);
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: cornerRadius, cy: cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		path.addVLineTo(toPos.y - taperWidth - cornerRadius);
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: -(cornerRadius - (isSCurveTaper ? 0 : taperWidth)), cy: cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		if (isSCurveTaper) {
-			const leftOverLength = length - catchLength - curveLength - cornerRadius;
-
-			if (leftOverLength > 0) {
-				path.addHLineBy(-leftOverLength);
-			}
-
-			path.addHorizSCurve(-curveLength, taperWidth);
-
-			//if (catchLength > 0) {
-			//	path.addHLineBy(-catchLength);
-			//}
-		}
-
-		path.addLineTo({ x: toPos.x, y: toPos.y });
-
-		return path;
-	};
-
-	function createTopTab2(settings, fromPos, toPos) {
-		const catchLength = settings.catchLength,
-			cornerRadius = settings.cornerRadius,
-			curveLength = settings.curveLength,
-			length = settings.length,
-			taperType = settings.taperType,
-			taperWidth = settings.taperWidth;
-
-		const isSCurveTaper = (taperWidth > 0) && (taperType === tuckbox.TAPER_TYPES.S_CURVE);
-
-		const path = new Svg.Path();
-
-		if (isSCurveTaper) {
-			const leftOverLength = length - catchLength - curveLength - cornerRadius;
-
-			if (catchLength > 0) {
-				path.addHLineBy(catchLength);
-			}
-
-			path.addHorizSCurve(curveLength, taperWidth);
-
-			if (leftOverLength > 0) {
-				path.addHLineBy(leftOverLength);
-			}
-		} else {
-			path.addLineBy({ cx: (length - (cornerRadius - (isSCurveTaper ? 0 : taperWidth))), cy: taperWidth });
-		}
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: (cornerRadius - (isSCurveTaper ? 0 : taperWidth)), cy: cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		path.addVLineTo(toPos.y - cornerRadius);
-
-		if (cornerRadius > 0) {
-			path.addArcBy(
-				{ cx: -cornerRadius, cy: cornerRadius },
-				{ rx: cornerRadius, ry: cornerRadius },
-				1);
-		}
-
-		//path.addHLineBy(-(length - cornerRadius));
-
-		path.addLineTo({ x: toPos.x, y: toPos.y });
-
-		return path;
-	};
 
 	// *** tuckbox ***
 
@@ -376,11 +274,16 @@
 			}
 
 			path.addVLineTo(y3 + sideFlap.gap);
-			path.add(createTopTabPath(topTab, { x: x3, y: y3 + sideFlap.gap }, { x: x3, y: y4 }));
+			path.add(createTabPath({
+				catchLength: topTab.catchLength,
+				cornerRadius: topTab.cornerRadius,
+				curveLength: topTab.curveLength,
+				taper2Type: topTab.taperType,
+				taper2Width: topTab.taperWidth
+			}, 1, 1, topTab.length, { x: x3, y: y4 }));
 
 			path.addVLineTo(y5);
 
-			//path.add(createTopTab2(topTab, { x: x3, y: y5 }, { x: x3, y: y6 }));
 			path.add(createTabPath({
 				catchLength: topTab.catchLength,
 				cornerRadius: topTab.cornerRadius,
@@ -398,14 +301,20 @@
 			path.addVLineTo(y4 + bottomFlap.taperWidth);
 			path.addLineTo({ x: x2, y: y4 });
 
-			path.add(createTabPath(bottomTab, -1, -1, bottomTab.length, { x: x2, y: y3 }));
+			path.add(createTabPath({
+				cornerRadius: bottomTab.cornerRadius,
+				taperWidth: bottomTab.taperWidth
+			}, -1, -1, bottomTab.length, { x: x2, y: y3 }));
 
 			// Bottom Flap
 			path.addHLineTo(x1);
 			path.addVLineTo(y2);
 			path.addHLineTo(x2);
 
-			path.add(createTabPath(bottomTab, -1, -1, bottomTab.length, { x: x2, y: y1 }));
+			path.add(createTabPath({
+				cornerRadius: bottomTab.cornerRadius,
+				taperWidth: bottomTab.taperWidth
+			}, -1, -1, bottomTab.length, { x: x2, y: y1 }));
 
 			outlineLayer.addChildren(path.createElement(outlinePen));
 

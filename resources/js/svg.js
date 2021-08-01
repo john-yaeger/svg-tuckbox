@@ -196,33 +196,8 @@
 	// *** Class: DrawingTool ***
 
 	class DrawingTool {
-		constructor() {}
-	}
-
-	DrawingTool.createCombinedStyleMap = function(/* drawingTool... */) {
-		let styleMaps = Array.from(arguments).map(drawingTool => drawingTool.styleMap);
-
-		return extend({}, ...styleMaps);
-	}
-
-	// *** Class: Pen ***
-
-	class Pen extends DrawingTool {
-		constructor(width, color) {
-			super();
-
-			this.styleMap = Pen.createStyleMap(width, color);
-		}
-
-		createCircleElement(origin, radius, /*optional*/ attrMap) {
-			return Element.createCircle(origin, radius, this.styleMap, attrMap);
-		}
-
-		createCirclePathElement(origin, radius, /*optional*/ attrMap) {
-			return new Path({ x: origin.x - radius, y: origin.y })
-				.addArcTo({ x: origin.x + radius, y: origin.y }, { rx: radius, ry: radius }, 1)
-				.addArcTo({ x: origin.x - radius, y: origin.y }, { rx: radius, ry: radius }, 1)
-				.createElement(this, attrMap);
+		constructor(styleMap) {
+			this.styleMap = styleMap;
 		}
 
 		createLineElement(pos1, pos2, /*optional*/ attrMap) {
@@ -237,16 +212,30 @@
 			return Element.createVLine(x, fromY, toY, this.styleMap, attrMap);
 		}
 
-		createHLinePathElement(y, fromX, toX, /*optional*/ attrMap) {
-			return new Path({ x: fromX, y: y })
-				.addHLineTo(toX)
-				.createElement(this, attrMap);
+		createCircleElement(origin, radius, /*optional*/ attrMap) {
+			return Element.createCircle(origin, radius, this.styleMap, attrMap);
 		}
 
-		createVLinePathElement(x, fromY, toY, /*optional*/ attrMap) {
-			return new Path({ x: x, y: fromY })
-				.addVLineTo(toY)
-				.createElement(this, attrMap);
+		createRectElement(x1, y1, x2, y2, attrMap) {
+			return Element.createRect(x1, y1, x2, y2, this.styleMap, attrMap);
+		}
+
+		createPathElement(path, /*optional*/ attrMap) {
+			return Element.createPath(path, this.styleMap, attrMap);
+		}
+	}
+
+	DrawingTool.createCombinedStyleMap = function(/* drawingTool... */) {
+		let styleMaps = Array.from(arguments).map(drawingTool => drawingTool.styleMap);
+
+		return extend({}, ...styleMaps);
+	}
+
+	// *** Class: Pen ***
+
+	class Pen extends DrawingTool {
+		constructor(width, color) {
+			super(Pen.createStyleMap(width, color));
 		}
 	};
 
@@ -262,13 +251,7 @@
 
 	class Brush extends DrawingTool {
 		constructor(color) {
-			super();
-
-			this.styleMap = Brush.createStyleMap(color);
-		}
-
-		createRectElement(x1, y1, x2, y2, attrMap) {
-			return Element.createRect(x1, y1, x2, y2, this.styleMap, attrMap);
+			super(Brush.createStyleMap(color));
 		}
 	};
 
@@ -620,17 +603,18 @@
 		addHorizSCurve: function(cx, cy) {
 			if (Math.abs(cx) > Math.abs(cy)) {
 				const cxSign = Math.sign(cx),
+					cySign = Math.sign(cy),
 					halfCx = cx / 2,
 					halfCy = cy / 2;
 
 				this.addCubicBezierBy(
 					{ cx: halfCx, cy: halfCy },
 					{ cx: 0, cy: 0 },
-					{ cx: halfCx - (cxSign * halfCy), cy: 0 });
+					{ cx: halfCx - (cxSign * cySign * halfCy), cy: 0 });
 
 				this.addCubicBezierBy(
 					{ cx: halfCx, cy: halfCy },
-					{ cx: cxSign * halfCy, cy: halfCy },
+					{ cx: cxSign * cySign * halfCy, cy: halfCy },
 					{ cx: 0, cy: 0 });
 			} else {
 				this.addLineBy({ cx: cx, cy: cy });
