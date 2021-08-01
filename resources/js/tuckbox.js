@@ -9,56 +9,85 @@
 		}
 	}
 
-	function addTabSideToPath(path, length, dir, xDir, yDir, settings) {
+	function addTabSideToPath(length, dir, xDir, yDir, settings) {
 		const taperType = settings.taperType || tuckbox.TAPER_TYPES.SIMPLE,
 			taperWidth = settings.taperWidth || 0,
 			cornerRadius = settings.cornerRadius || 0,
 			catchLength = settings.catchLength || 0,
 			curveLength = settings.curveLength || 0;
 
-		const radialAdjustment = ((taperWidth > 0) && (taperType !== tuckbox.TAPER_TYPES.S_CURVE)) ? taperWidth : 0;
+		const taperLength = length - catchLength,
+			taperSlopeAngle = Math.atan(taperWidth / taperLength);
 
-		if ((dir < 0) && (cornerRadius > 0)) {
+		let cornerDim = null;
+
+		if (cornerRadius > 0) {
+			const angle = (Math.PI / 2) - taperSlopeAngle;
+
+			if ((taperWidth > 0) && (taperType !== tuckbox.TAPER_TYPES.S_CURVE)) {
+				cornerDim = {
+					cx: cornerRadius - (cornerRadius * Math.cos(angle)),
+					cy: cornerRadius * Math.sin(angle)
+				};
+			} else {
+				cornerDim = { cx: cornerRadius, cy: cornerRadius };
+			}
+		}
+
+		const adjustedTaperLength = (taperLength - (cornerDim ? cornerDim.cx : 0));
+
+		const path = new Svg.Path();
+		let deltaY = 0;
+
+		if ((dir < 0) && cornerDim) {
 			path.addArcBy(
-				{ cx: -xDir * (cornerRadius - radialAdjustment), cy: yDir * cornerRadius },
+				{ cx: -xDir * cornerDim.cx, cy: yDir * cornerDim.cy },
 				{ rx: cornerRadius, ry: cornerRadius },
 				(xDir * yDir > 0) ? 1 : 0);
+			deltaY += cornerDim.cy;
 		}
 
 		if (taperWidth > 0) {
-			const leftOverLength = length - catchLength - curveLength;
-
 			if ((dir > 0) && (catchLength > 0)) {
 				path.addHLineBy(dir * xDir * catchLength);
 			}
 
 			if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
+				const leftOverLength = adjustedTaperLength - curveLength;
+
 				if ((dir < 0) && (leftOverLength > 0)) {
 					path.addHLineBy(dir * xDir * leftOverLength);
 				}
 
 				path.addHorizSCurve(dir * xDir * curveLength, yDir * taperWidth);
+				deltaY += taperWidth;
 
 				if ((dir > 0) && (leftOverLength > 0)) {
 					path.addHLineBy(dir * xDir * leftOverLength);
 				}
 			} else {
-				path.addLineBy({ cx: dir * xDir * (length - catchLength + taperWidth), cy: yDir * taperWidth });
+				const lineCy = taperWidth - (cornerDim ? (cornerDim.cx * Math.tan(taperSlopeAngle)) : 0);
+
+				path.addLineBy({ cx: dir * xDir * adjustedTaperLength, cy: yDir * lineCy });
+				deltaY += lineCy;
 			}
 
 			if ((dir < 0) && (catchLength > 0)) {
 				path.addHLineBy(dir * xDir * catchLength);
 			}
 		} else {
-			path.addHLineBy(dir * xDir * length);
+			path.addHLineBy(dir * xDir * (length - (cornerDim ? cornerDim.cx : 0)));
 		}
 
-		if ((dir > 0) && (cornerRadius > 0)) {
+		if ((dir > 0) && cornerDim) {
 			path.addArcBy(
-				{ cx: xDir * (cornerRadius - radialAdjustment), cy: yDir * cornerRadius },
+				{ cx: xDir * cornerDim.cx, cy: yDir * cornerDim.cy },
 				{ rx: cornerRadius, ry: cornerRadius },
 				(xDir * yDir > 0) ? 1 : 0);
+			deltaY += cornerDim.cy;
 		}
+
+		return [path, deltaY];
 	}
 
 	function createTabPath(settings, xDir, yDir, length, toPos) {
@@ -70,9 +99,7 @@
 			taper2Type = settings.taper2Type || settings.taperType || null,
 			taper2Width = settings.taper2Width || settings.taperWidth || 0;
 
-		const path = new Svg.Path();
-
-		addTabSideToPath(path, length - cornerRadius, 1, xDir, yDir, {
+		const [sidePath1, deltaY1] = addTabSideToPath(length, 1, xDir, yDir, {
 			taperType: taper1Type,
 			taperWidth: taper1Width,
 			cornerRadius: cornerRadius,
@@ -80,9 +107,7 @@
 			curveLength: curveLength
 		});
 
-		path.addVLineTo(toPos.y - yDir * (taper2Width + cornerRadius));
-
-		addTabSideToPath(path, length - cornerRadius, -1, xDir, yDir, {
+		const [sidePath2, deltaY2] = addTabSideToPath(length, -1, xDir, yDir, {
 			taperType: taper2Type,
 			taperWidth: taper2Width,
 			cornerRadius: cornerRadius,
@@ -90,9 +115,11 @@
 			curveLength: curveLength
 		});
 
-		path.addLineTo(toPos);
-
-		return path;
+		return new Svg.Path()
+			.add(sidePath1)
+			.addVLineTo(toPos.y - (yDir * deltaY2))
+			.add(sidePath2)
+			.addMoveTo(toPos);
 	}
 
 	// *** tuckbox ***
