@@ -103,7 +103,7 @@ select[disabled].readonly {
     background: linear-gradient(rgb(70, 128, 116), rgb(35,47,45));
     border: 0;
     margin: 0;
-    padding: 12px 0;
+    padding: 8px 0;
 }
 #app_header:after { /* clearfix */
     visibility: hidden;
@@ -127,7 +127,7 @@ select[disabled].readonly {
     color: rgb(110,151,145);
     font: bold 32px Verdana,Arial,sans-serif;
     float: left;
-    margin: 0;
+    margin: 0 0 0 12px;
     text-shadow: -2px -2px 0 rgb(26,37,33), 1px 1px 0 rgb(214,202,162);
 }
 
