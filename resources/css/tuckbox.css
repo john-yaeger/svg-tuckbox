@@ -55,14 +55,14 @@ button::-moz-focus-inner {
 }
 
 fieldset { /* TODO - non-semantic */
-	margin: 12px;
+	margin: 0 12px;
 	border: 1px solid rgb(181,139,53);
 	border-radius: 6px;
 	padding: 4px 8px 6px 8px;
 	background-color: rgb(220,214,180);
 }
-fieldset:first-of-type {
-	margin-top: 0;
+fieldset>fieldset:not(:first-of-type) {
+	margin: 12px;
 }
 fieldset > legend { /* TODO - non-semantic */
 	margin-bottom: 6px;
@@ -227,15 +227,6 @@ select[disabled].readonly {
 /*
   PAPER FIELD GROUP
 */
-#page_tuckbox #paperFieldGroup {
-}
-#page_tuckbox #mainContainer:after { /* clearfix */
-	visibility: hidden;
-	display: block;
-	content: "";
-	clear: both;
-	height: 0;
-}
 #page_tuckbox #paperSizeFieldGroup {
 	margin-left: 12px;
 	width: auto;
@@ -248,9 +239,6 @@ select[disabled].readonly {
 /*
   BOX SIZE FIELD GROUP
 */
-#page_tuckbox #boxSizeFieldGroup {
-	margin-top: 12px;
-}
 #page_tuckbox #boxSizeFieldGroup:after { /* clearfix */
 	visibility: hidden;
 	display: block;
@@ -280,9 +268,6 @@ select[disabled].readonly {
 /*
   FLAPS FIELD GROUP
 */
-#page_tuckbox #flapsFieldGroup {
-	margin-top: 12px;
-}
 #page_tuckbox #flapsFieldGroup:after { /* clearfix */
 	visibility: hidden;
 	display: block;
@@ -315,9 +300,6 @@ select[disabled].readonly {
 /*
   TABS FIELD GROUP
 */
-#page_tuckbox #tabsFieldGroup {
-	margin-top: 12px;
-}
 #page_tuckbox #tabsFieldGroup:after { /* clearfix */
 	visibility: hidden;
 	display: block;
@@ -346,9 +328,6 @@ select[disabled].readonly {
 /*
   BACKGROUND FIELD GROUP
 */
-#page_tuckbox #backgroundFieldGroup {
-	margin-top: 12px;
-}
 #page_tuckbox #backgroundFieldGroup:after { /* clearfix */
 	visibility: hidden;
 	display: block;
