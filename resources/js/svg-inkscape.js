@@ -64,9 +64,8 @@
 
 	// *** Public Functions ***
 
-	function createLayerElement(id, title, options) {
+	function createLayerElement(id, title /* defaults to id */, options = {}) {
 		title = title || id;
-		options = options || {};
 		return new Svg.Element('g')
 			.addAttrs({
 				'id': id,

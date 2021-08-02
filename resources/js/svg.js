@@ -106,9 +106,7 @@
 			return this;
 		}
 
-		toString(level) {
-			level = level || 0;
-
+		toString(level = 0) {
 			const indent = repeatString(INDENT, level);
 
 			let text = indent + '<' + this.name;

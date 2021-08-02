@@ -9,7 +9,7 @@
 		}
 	}
 
-	function addTabSideToPath(length, dir, xDir, yDir, settings) {
+	function createTabSidePath(length, dir, xDir, yDir, settings) {
 		const taperType = settings.taperType || tuckbox.TAPER_TYPES.SIMPLE,
 			taperWidth = settings.taperWidth || 0,
 			cornerRadius = settings.cornerRadius || 0,
@@ -17,17 +17,17 @@
 			curveLength = settings.curveLength || 0;
 
 		const taperLength = length - catchLength,
-			taperSlopeAngle = Math.atan(taperWidth / taperLength);
+			taperAngle = Math.atan(taperWidth / taperLength);
 
 		let cornerDim = null;
 
 		if (cornerRadius > 0) {
-			const angle = (Math.PI / 2) - taperSlopeAngle;
+			if ((taperWidth > 0) && (taperType === tuckbox.TAPER_TYPES.SIMPLE)) {
+				const cornerAngle = (Math.PI / 2) - taperAngle;
 
-			if ((taperWidth > 0) && (taperType !== tuckbox.TAPER_TYPES.S_CURVE)) {
 				cornerDim = {
-					cx: cornerRadius - (cornerRadius * Math.cos(angle)),
-					cy: cornerRadius * Math.sin(angle)
+					cx: cornerRadius - (cornerRadius * Math.cos(cornerAngle)),
+					cy: cornerRadius * Math.sin(cornerAngle)
 				};
 			} else {
 				cornerDim = { cx: cornerRadius, cy: cornerRadius };
@@ -66,7 +66,7 @@
 					path.addHLineBy(dir * xDir * leftOverLength);
 				}
 			} else {
-				const lineCy = taperWidth - (cornerDim ? (cornerDim.cx * Math.tan(taperSlopeAngle)) : 0);
+				const lineCy = taperWidth - (cornerDim ? (cornerDim.cx * Math.tan(taperAngle)) : 0);
 
 				path.addLineBy({ cx: dir * xDir * adjustedTaperLength, cy: yDir * lineCy });
 				deltaY += lineCy;
@@ -99,7 +99,7 @@
 			taper2Type = settings.taper2Type || settings.taperType || null,
 			taper2Width = settings.taper2Width || settings.taperWidth || 0;
 
-		const [sidePath1, deltaY1] = addTabSideToPath(length, 1, xDir, yDir, {
+		const [sidePath1, deltaY1] = createTabSidePath(length, 1, xDir, yDir, {
 			taperType: taper1Type,
 			taperWidth: taper1Width,
 			cornerRadius: cornerRadius,
@@ -107,7 +107,7 @@
 			curveLength: curveLength
 		});
 
-		const [sidePath2, deltaY2] = addTabSideToPath(length, -1, xDir, yDir, {
+		const [sidePath2, deltaY2] = createTabSidePath(length, -1, xDir, yDir, {
 			taperType: taper2Type,
 			taperWidth: taper2Width,
 			cornerRadius: cornerRadius,
