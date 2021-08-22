@@ -4,16 +4,44 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<title>Tuck Box</title>
+		<title>Tuckbox</title>
 
+		<link href="resources/css/jquery-ui/jquery-ui.css" rel="stylesheet" type="text/css" />
 		<link href="resources/css/tuckbox.css" rel="stylesheet" type="text/css" />
 
 		<script src="resources/js/jquery-3.1.1.js"></script>
+		<script src="resources/js/jquery-ui.js"></script>
 		<script src="resources/js/utils.js"></script>
+		<script src="resources/js/jcommons.js"></script>
+		<script src="resources/js/jcommons.ui.dialog-1.0.js"></script>
 		<script src="resources/js/svg.js"></script>
 		<script src="resources/js/svg-inkscape.js"></script>
 		<script src="resources/js/tuckbox.js"></script>
 		<script src="resources/js/page-tuckbox.js"></script>
+
+		<script id="viewDialogHtml" type="html">
+			<div id="viewDialogContainer">
+				<textarea class="svgDocText" readonly>
+				</textarea>
+			</div>
+		</script>
+
+		<script id="saveDialogHtml" type="html">
+			<div id="saveDialogContainer">
+				<div class="field filenameField">
+					<label>
+						<span class="label">Filename</span>
+						<input class="filename" type="text" value="tuckbox.svg" />
+					</label>
+				</div>
+			</div>
+		</script>
+
+		<script id="previewDialogHtml" type="html">
+			<div id="previewDialogContainer">
+				<svg class="svgPreview" height="600" viewBox="0 0 0 0" width="100"></svg>
+			</div>
+		</script>
 	</head>
 	<body id="page_tuckbox">
 		<div id="app_header">
@@ -26,7 +54,7 @@
 		<div id="mainTabContainer">
 			<ul class="tabList">
 				<li class="active tab"><a>Tuckbox</a></li>
-				<li class="tab" style="display: none"><a href="<c:url value='/envelope' />">Envelope</a></li>
+				<li class="tab"><a href="telescoping-box.html">Telescoping Box</a></li>
 				<li class="tab" style="display: none"><a href="<c:url value='/fliptopbox' />">Flip Top Box</a></li>
 			</ul>
 		</div>
@@ -68,14 +96,14 @@
 								<span class="label">Width</span>
 								<input data-rule-number=”true” id="paper_width" name="paper_width" required type="text" value="" />
 							</label>
-							<span class="paper units"></span>
+							<span class="paperUnits units"></span>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Height</span>
 								<input data-rule-number=”true” id="paper_height" name="paper_height" required type="text" value="" />
 							</label>
-							<span class="paper units"></span>
+							<span class="paperUnits units"></span>
 						</div>
 					</fieldset>
 
@@ -86,19 +114,19 @@
 								<span class="label">Top</span>
 								<input id="paper_margin_top" type="text" value=".25" />
 							</label>
-							<span class="paper units"></span>
+							<span class="paperUnits units"></span>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Left</span>
 								<input id="paper_margin_left" type="text" value=".25" />
 							</label>
-							<span class="paper units"></span>
+							<span class="paperUnits units"></span>
 						</div>
 					</fieldset>
 				</fieldset>
 
-				<fieldset id="documentFieldGroup">
+				<fieldset id="docFieldGroup">
 					<legend>Document</legend>
 
 					<div class="field">
@@ -121,21 +149,21 @@
 							<label>
 								<span class="label">Width</span>
 								<input id="card_width" type="text" value="64" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Height</span>
 								<input id="card_height" type="text" value="90" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Stack Depth</span>
 								<input id="card_depth" type="text" value="20" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -146,21 +174,21 @@
 							<label>
 								<span class="label">Width</span>
 								<input id="insideBuffer_width" type="text" value="1.5" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Height</span>
 								<input id="insideBuffer_height" type="text" value="1.5" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Depth</span>
 								<input id="insideBuffer_depth" type="text" value="1.5" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -171,7 +199,7 @@
 							<label>
 								<span class="label">Thickness</span>
 								<input id="material_thickness" type="text" value="0.5" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -186,14 +214,14 @@
 							<label>
 								<span class="label">Length</span>
 								<input id="topFlapTongue_length" type="text" value="22" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Curve Width</span>
 								<input id="topFlapTongue_curveWidth" type="text" value="16" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -204,14 +232,14 @@
 							<label>
 								<span class="label">Gap</span>
 								<input id="sideFlap_gap" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Taper Width</span>
 								<input id="sideFlap_taperWidth" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -222,14 +250,14 @@
 							<label>
 								<span class="label">Gap</span>
 								<input id="bottomFlap_gap" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Taper Width</span>
 								<input id="bottomFlap_taperWidth" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -244,35 +272,35 @@
 							<label>
 								<span class="label">Length</span>
 								<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_length" type="text" value="18" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Corner Radius</span>
 								<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_cornerRadius" type="text" value="4" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Taper Width</span>
 								<input id="topTab_taperWidth" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Catch Length</span>
 								<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_catchLength" type="text" value="4" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Taper Type</span>
 								<select class="update_topTabTaperTypeSCurveExtraLength" id="topTab_taperType">
-									<option value="SIMPLE">Simple</option>
+									<option value="LINEAR">Linear</option>
 									<option value="S_CURVE" selected>S-Curve</option>
 								</select>
 							</label>
@@ -281,14 +309,14 @@
 							<label>
 								<span class="label">Curve Length</span>
 								<input class="update_topTabTaperTypeSCurveExtraLength" id="topTab_curveLength" type="text" value="4" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field for_topTabTaperTypeSCurve">
 							<label>
 								<span class="label">Extra Length</span>
 								<input class="readonly" id="topTab_extraLength" readonly type="text" value="" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -300,21 +328,21 @@
 							<label>
 								<span class="label">Length</span>
 								<input id="bottomTab_length" type="text" value="18" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Corner Radius</span>
 								<input id="bottomTab_cornerRadius" type="text" value="4" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Taper Width</span>
 								<input id="bottomTab_taperWidth" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -329,7 +357,7 @@
 							<label>
 								<span class="label">Length</span>
 								<input id="backSlits_length" type="text" value="8" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -340,7 +368,7 @@
 							<label>
 								<span class="label">Length</span>
 								<input id="lockSlits_length" type="text" value="0" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
@@ -351,17 +379,36 @@
 							<label>
 								<span class="label">Radius</span>
 								<input id="thumbNotch_radius" type="text" value="9" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 						<div class="field">
 							<label>
 								<span class="label">Offset</span>
 								<input id="thumbNotch_offset" type="text" value="2" />
-								<span class="document units"></span>
+								<span class="docUnits units"></span>
 							</label>
 						</div>
 					</fieldset>
+				</fieldset>
+
+				<fieldset id="guideLinesFieldGroup">
+					<legend>Guide Lines</legend>
+
+					<div class="field">
+						<label>
+							<span class="label">Minimum Length</span>
+							<input id="guide_length" type="text" value="5" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Gap</span>
+							<input id="guide_gap" type="text" value="2" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
 				</fieldset>
 
 				<fieldset id="backgroundFieldGroup">
@@ -376,24 +423,20 @@
 						<label>
 							<span class="label">Bleed</span>
 							<input id="background_bleed" type="text" value="2" />
-							<span class="document units"></span>
+							<span class="docUnits units"></span>
 						</label>
 					</div>
 				</fieldset>
 			</div>
 
 			<div id="buttonGroup">
-				<button id="svgViewButton" type="button" style="display: none"><span class="glyph"></span>View SVG</button>
+				<button id="svgViewButton" type="button"><span class="glyph"></span>View SVG</button>
 				<button id="svgCopyButton" type="button"><span class="glyph"></span>Copy SVG</button>
 				<button id="svgSaveButton" type="button"><span class="glyph"></span>Save SVG</button>
 			</div>
 
 			<div id="previewContainer">
-				<svg id="preview" height="500" viewBox="0 0 0 0" width="300"></svg>
-			</div>
-
-			<div style="display: none">
-				<textarea id="doc" style="width: 600px; height: 300px;"></textarea>
+				<svg id="preview" height="500" viewBox="0 0 0 0" width="320"></svg>
 			</div>
 		</div>
 	</body>

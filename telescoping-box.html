@@ -1,0 +1,288 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>Telescoping Box</title>
+
+		<link href="resources/css/jquery-ui/jquery-ui.css" rel="stylesheet" type="text/css" />
+		<link href="resources/css/tuckbox.css" rel="stylesheet" type="text/css" />
+
+		<script src="resources/js/jquery-3.1.1.js"></script>
+		<script src="resources/js/jquery-ui.js"></script>
+		<script src="resources/js/utils.js"></script>
+		<script src="resources/js/jcommons.js"></script>
+		<script src="resources/js/jcommons.ui.dialog-1.0.js"></script>
+		<script src="resources/js/svg.js"></script>
+		<script src="resources/js/svg-inkscape.js"></script>
+		<script src="resources/js/telescoping-box.js"></script>
+		<script src="resources/js/page-telescoping-box.js"></script>
+
+		<script id="viewDialogHtml" type="html">
+			<div id="viewDialogContainer">
+				<textarea class="svgDocText" readonly>
+				</textarea>
+			</div>
+		</script>
+
+		<script id="saveDialogHtml" type="html">
+			<div id="saveDialogContainer">
+				<div class="field filenameField">
+					<label>
+						<span class="label">Filename</span>
+						<input class="filename" type="text" value="tuckbox.svg" />
+					</label>
+				</div>
+			</div>
+		</script>
+
+		<script id="previewDialogHtml" type="html">
+			<div id="previewDialogContainer">
+				<svg class="svgPreview" height="600" viewBox="0 0 0 0" width="100"></svg>
+			</div>
+		</script>
+	</head>
+	<body id="page_telescoping_box">
+		<div id="app_header">
+			<div class="logo" style="display: none">
+			</div>
+
+			<h1>SVG Tuckbox Generator</h1>
+		</div>
+
+		<div id="mainTabContainer">
+			<ul class="tabList">
+				<li class="tab"><a href="index.html">Tuckbox</a></li>
+				<li class="active tab"><a>Telescoping Box</a></li>
+				<li class="tab" style="display: none"><a href="<c:url value='/fliptopbox' />">Flip Top Box</a></li>
+			</ul>
+		</div>
+
+		<div id="bodyContainer">
+
+			<ul id="fieldGroupChooser"></ul>
+
+			<div id="settings" style="display: none">
+				<fieldset id="paperFieldGroup">
+					<legend>Paper</legend>
+
+					<fieldset id="paperSizeFieldGroup">
+						<legend>Size</legend>
+						<div class="field">
+							<label>
+								<span class="label">Type</span>
+								<select id="paper_type">
+									<option value="">Custom</option>
+									<option value="A4">A4</option>
+									<option value="LETTER" selected>Letter</option>
+									<option value="LEGAL">Legal</option>
+									<option value="TABLOID">11 x 17</option>
+								</select>
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Units</span>
+								<select id="paper_units_select">
+									<option value="INCHES">Inches</option>
+									<option value="MM">Millimeters</option>
+								</select>
+								<input id="paper_units" type="hidden" />
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Width</span>
+								<input data-rule-number=”true” id="paper_width" name="paper_width" required type="text" value="" />
+							</label>
+							<span class="paperUnits units"></span>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Height</span>
+								<input data-rule-number=”true” id="paper_height" name="paper_height" required type="text" value="" />
+							</label>
+							<span class="paperUnits units"></span>
+						</div>
+					</fieldset>
+
+					<fieldset id="paperMarginsFieldGroup">
+						<legend>Margins</legend>
+						<div class="field">
+							<label>
+								<span class="label">Top</span>
+								<input id="paper_margin_top" type="text" value=".25" />
+							</label>
+							<span class="paperUnits units"></span>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Left</span>
+								<input id="paper_margin_left" type="text" value=".25" />
+							</label>
+							<span class="paperUnits units"></span>
+						</div>
+					</fieldset>
+				</fieldset>
+
+				<fieldset id="docFieldGroup">
+					<legend>Document</legend>
+
+					<div class="field">
+						<label>
+							<span class="label">Units</span>
+							<select id="doc_units">
+								<option value="INCHES">Inches</option>
+								<option value="MM" selected>Millimeters</option>
+							</select>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="boxSizeFieldGroup">
+					<legend>Box Size</legend>
+
+					<fieldset id="cardDimensionsFieldGroup">
+						<legend>Inside Dimensions</legend>
+						<div class="field">
+							<label>
+								<span class="label">Length</span>
+								<input id="box_length" type="text" value="70" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Width</span>
+								<input id="box_width" type="text" value="50" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Height</span>
+								<input id="box_height" type="text" value="20" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+					</fieldset>
+
+					<fieldset id="cardMaterialFieldGroup">
+						<legend>Material</legend>
+						<div class="field">
+							<label>
+								<span class="label">Thickness</span>
+								<input id="material_thickness" type="text" value="1.2" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+					</fieldset>
+				</fieldset>
+
+				<fieldset id="flapsFieldGroup">
+					<legend>Flaps</legend>
+					<div class="field">
+						<label>
+							<span class="label">Length</span>
+							<input id="flap_length" type="text" value="22" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="flap_taperWidth" type="text" value="2" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="overlapFieldGroup">
+					<legend>Overlap</legend>
+					<div class="field">
+						<label>
+							<span class="label">Height</span>
+							<input id="overlap_height" type="text" value="22" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Taper Width</span>
+							<input id="overlap_taperWidth" type="text" value="0" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="guideLinesFieldGroup">
+					<legend>Guide Lines</legend>
+
+					<div class="field">
+						<label>
+							<span class="label">Minimum Length</span>
+							<input id="guide_length" type="text" value="5" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+					<div class="field">
+						<label>
+							<span class="label">Gap</span>
+							<input id="guide_gap" type="text" value="2" />
+							<span class="docUnits units"></span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset id="backgroundFieldGroup">
+					<legend>Background</legend>
+
+					<fieldset id="outsideBackgroundFieldGroup">
+						<legend>Outside</legend>
+						<div class="field">
+							<label>
+								<span class="label">Color</span>
+								<input id="outside_background_color" type="text" value="rgb(161,161,161)" />
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Bleed</span>
+								<input id="outside_background_bleed" type="text" value="2" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+					</fieldset>
+
+					<fieldset id="insideBackgroundFieldGroup">
+						<legend>inside</legend>
+						<div class="field">
+							<label>
+								<span class="label">Color</span>
+								<input id="inside_background_color" type="text" value="#FFFFFF" />
+							</label>
+						</div>
+						<div class="field">
+							<label>
+								<span class="label">Bleed</span>
+								<input id="inside_background_bleed" type="text" value="2" />
+								<span class="docUnits units"></span>
+							</label>
+						</div>
+					</fieldset>
+				</fieldset>
+			</div>
+
+			<div id="buttonGroup">
+				<button id="svgViewButton" type="button"><span class="glyph"></span>View SVG</button>
+				<button id="svgCopyButton" type="button"><span class="glyph"></span>Copy SVG</button>
+				<button id="svgSaveButton" type="button"><span class="glyph"></span>Save SVG</button>
+			</div>
+
+			<div id="previewContainer">
+				<svg id="preview" height="500" viewBox="0 0 0 0" width="320"></svg>
+			</div>
+		</div>
+	</body>
+</html>

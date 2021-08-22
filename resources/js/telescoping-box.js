@@ -8,6 +8,13 @@
 			color: '#000000'
 		}
 	}
+	
+	function reverseDim(dim) {
+		return {
+			cx: dim.cy,
+			cy: dim.cx
+		}
+	}
 
 	function createTabSidePath(length, dir, xDir, yDir, settings) {
 		const taperType = settings.taperType || tuckbox.TAPER_TYPES.LINEAR,
@@ -41,7 +48,7 @@
 
 		if ((dir < 0) && cornerDim) {
 			path.addArcBy(
-				{ cx: -xDir * cornerDim.cx, cy: yDir * cornerDim.cy },
+				reverseDim({ cx: -xDir * cornerDim.cx, cy: yDir * cornerDim.cy }),
 				{ rx: cornerRadius, ry: cornerRadius },
 				(xDir * yDir > 0) ? 1 : 0);
 			deltaY += cornerDim.cy;
@@ -49,39 +56,39 @@
 
 		if (taperWidth > 0) {
 			if ((dir > 0) && (catchLength > 0)) {
-				path.addHLineBy(dir * xDir * catchLength);
+				path.addLineBy(reverseDim({ cx: dir * xDir * catchLength, cy: 0 }));
 			}
 
 			if (taperType === tuckbox.TAPER_TYPES.S_CURVE) {
 				const leftOverLength = adjustedTaperLength - curveLength;
 
 				if ((dir < 0) && (leftOverLength > 0)) {
-					path.addHLineBy(dir * xDir * leftOverLength);
+					path.addLineBy(reverseDim({ cx: dir * xDir * leftOverLength, cy: 0 }));
 				}
 
-				path.addHorizSCurve(dir * xDir * curveLength, yDir * taperWidth);
+				path.addHorizSCurve(dir * xDir * curveLength, yDir * taperWidth); // TODO
 				deltaY += taperWidth;
 
 				if ((dir > 0) && (leftOverLength > 0)) {
-					path.addHLineBy(dir * xDir * leftOverLength);
+					path.addLineBy(reverseDim({ cx: dir * xDir * leftOverLength, cy: 0 }));
 				}
 			} else {
 				const lineCy = taperWidth - (cornerDim ? (cornerDim.cx * Math.tan(taperAngle)) : 0);
 
-				path.addLineBy({ cx: dir * xDir * adjustedTaperLength, cy: yDir * lineCy });
+				path.addLineBy(reverseDim({ cx: dir * xDir * adjustedTaperLength, cy: yDir * lineCy }));
 				deltaY += lineCy;
 			}
 
 			if ((dir < 0) && (catchLength > 0)) {
-				path.addHLineBy(dir * xDir * catchLength);
+				path.addLineBy(reverseDim({ cx: dir * xDir * catchLength, cy: 0 }));
 			}
 		} else {
-			path.addHLineBy(dir * xDir * (length - (cornerDim ? cornerDim.cx : 0)));
+			path.addLineBy(reverseDim({ cx: dir * xDir * (length - (cornerDim ? cornerDim.cx : 0)), cy: 0 }));
 		}
 
 		if ((dir > 0) && cornerDim) {
 			path.addArcBy(
-				{ cx: xDir * cornerDim.cx, cy: yDir * cornerDim.cy },
+				reverseDim({ cx: xDir * cornerDim.cx, cy: yDir * cornerDim.cy }),
 				{ rx: cornerRadius, ry: cornerRadius },
 				(xDir * yDir > 0) ? 1 : 0);
 			deltaY += cornerDim.cy;
@@ -117,7 +124,7 @@
 
 		return new Svg.Path()
 			.add(sidePath1)
-			.addVLineTo(toPos.y - (yDir * deltaY2))
+			.addLineTo(reverseDim({ cx: 0, cy: toPos.y - (yDir * deltaY2) }))
 			.add(sidePath2)
 			.addLineTo(toPos);
 	}
@@ -156,10 +163,9 @@
 			};
 
 			const box = {
-				backWidth: card.width + insideBuffer.width,
-				frontWidth: card.width + insideBuffer.width + materialThickness,
-				height: card.height + insideBuffer.height,
-				depth: card.depth + insideBuffer.depth
+				length: 70,
+				width: 50,
+				height: 20
 			};
 
 			const imageWidth = Math.max(box.depth, bottomTab.length)
@@ -187,18 +193,23 @@
 				imagePos.x += bottomTab.length - box.depth;
 			}
 
-			const x1 = imagePos.x,
-				x2 = x1 + box.depth,
-				x3 = x2 + box.height,
-				x4 = x3 + box.depth,
-				x5 = x4 + topFlapTongue.length;
+			overlap = {
+				height: 20
+			};
 
-			const y1 = imagePos.y,
-				y2 = y1 + box.depth,
-				y3 = y2 + box.backWidth,
-				y4 = y3 + box.depth,
-				y5 = y4 + box.frontWidth,
-				y6 = y5 + box.depth - sideFlap.gap;
+			const x1 = imagePos.x,
+				x2 = x1 + overlap.height + materialThickness,
+				x3 = x2 + box.height + materialThickness,
+				x4 = x3 + box.length,
+				x5 = x4 + box.height + materialThickness,
+				x6 = x5 + overlap.height + materialThickness;
+
+			const y1 = imagePos.x,
+				y2 = y1 + overlap.height + materialThickness,
+				y3 = y2 + box.height + materialThickness,
+				y4 = y3 + box.width,
+				y5 = y4 + box.height + materialThickness,
+				y6 = y5 + overlap.height + materialThickness;
 
 			const adjustedX1 = x2 - Math.max(box.depth, bottomTab.length);
 				adjustedX5 = x3 + Math.max(box.depth + topFlapTongue.length, topTab.length);
@@ -275,71 +286,36 @@
 
 			const outlinePen = new Svg.Pen(outlineSettings.pen.width, outlineSettings.pen.color);
 
-			const path = new Svg.Path({ x: x2, y: y1 });
+			const path = new Svg.Path({ x: x3, y: y3 });
 
-			// Side Flap
-			path.addHLineTo(x3);
-			path.addVLineTo(y2);
-
-			if (backSlits.length > 0) {
-				path.addHLineTo(x3 - backSlits.length);
-				path.addHLineTo(x3);
-			}
-
-			// Top Flap & Tongue
+			// Long Side
+			path.addVLineTo(y1);
 			path.addHLineTo(x4);
-			path.addArcTo({ x: x5, y: y2 + topFlapTongue.curveWidth }, tongueRadii, 1);
-			path.addVLineTo(y3 - topFlapTongue.curveWidth);
-			path.addArcTo({ x: x4, y: y3 }, tongueRadii, 1);
+			path.addVLineTo(y3);
+
+            // Short Side
+			path.addHLineTo(x4 + materialThickness);
+			//path.add(createTabPath(settings, xDir, yDir, length, { x: x5, y: y3 )); // TAB
+			path.add(createTabPath({
+				cornerRadius: 0,
+				taperWidth: 0
+			}, 1, -1, 33, { x: x3, y: y4 }));
+
+			path.addHLineTo(x6);
+			path.addVLineTo(y4);
+			path.addHLineTo(x4);
+
+            // Long Side
+			path.addVLineTo(y6);
 			path.addHLineTo(x3);
+			path.addVLineTo(y4);
 
-			if (backSlits.length > 0) {
-				path.addHLineTo(x3 - backSlits.length);
-				path.addHLineTo(x3);
-			}
-
-			path.addVLineTo(y3 + sideFlap.gap);
-			path.add(createTabPath({
-				catchLength: topTab.catchLength,
-				cornerRadius: topTab.cornerRadius,
-				curveLength: topTab.curveLength,
-				taper2Type: topTab.taperType,
-				taper2Width: topTab.taperWidth
-			}, 1, 1, topTab.length, { x: x3, y: y4 }));
-
-			path.addVLineTo(y5);
-
-			path.add(createTabPath({
-				catchLength: topTab.catchLength,
-				cornerRadius: topTab.cornerRadius,
-				curveLength: topTab.curveLength,
-				taper1Type: topTab.taperType,
-				taper1Width: topTab.taperWidth
-			}, 1, 1, topTab.length, { x: x3, y: y6 }));
-
-			// Side Flap
-			path.addHLineTo(x2 + sideFlap.taperWidth);
-			path.addLineTo({ x: x2, y: y5 });
-
-			// Bottom Flap
-			path.addLineTo({ x: x1 + bottomFlap.gap, y: y5 - bottomFlap.taperWidth });
-			path.addVLineTo(y4 + bottomFlap.taperWidth);
-			path.addLineTo({ x: x2, y: y4 });
-
-			path.add(createTabPath({
-				cornerRadius: bottomTab.cornerRadius,
-				taperWidth: bottomTab.taperWidth
-			}, -1, -1, bottomTab.length, { x: x2, y: y3 }));
-
-			// Bottom Flap
+            // Short Side
+			path.addHLineTo(x3 - materialThickness);
+			path.addHLineTo(x2); // TAB
 			path.addHLineTo(x1);
-			path.addVLineTo(y2);
-			path.addHLineTo(x2);
-
-			path.add(createTabPath({
-				cornerRadius: bottomTab.cornerRadius,
-				taperWidth: bottomTab.taperWidth
-			}, -1, -1, bottomTab.length, { x: x2, y: y1 }));
+			path.addVLineTo(y3);
+			path.addHLineTo(x3);
 
 			outlineLayer.addChildren(path.createElement(outlinePen));
 
@@ -377,56 +353,6 @@
 
 			const guidePen = new Svg.Pen(outlineSettings.pen.width, outlineSettings.pen.color); // TODO
 
-			guideLayer.addChildren(
-				guidePen.createHLineElement(y1, guideBox.left, x2 - bottomTab.length - guide.gap),
-				guidePen.createHLineElement(y2, guideBox.left, adjustedX1 - guide.gap),
-				guidePen.createHLineElement(y3, guideBox.left, adjustedX1 - guide.gap),
-				guidePen.createHLineElement(y4, guideBox.left, Math.min(x1 + bottomFlap.gap, x2 - bottomTab.length) - guide.gap),
-				guidePen.createHLineElement(y5, guideBox.left, x1 + bottomFlap.gap - guide.gap),
-				guidePen.createHLineElement(y6, guideBox.left, x2 + sideFlap.taperWidth - guide.gap),
-
-				guidePen.createHLineElement(y1, guideBox.right, x3 + guide.gap),
-				guidePen.createHLineElement(y2, guideBox.right, x5 + guide.gap),
-				guidePen.createHLineElement(y3, guideBox.right, adjustedX5 + guide.gap),
-				guidePen.createHLineElement(y4, guideBox.right, x3 + topTab.length + guide.gap),
-				guidePen.createHLineElement(y5, guideBox.right, x3 + topTab.length + guide.gap),
-				guidePen.createHLineElement(y6, guideBox.right, x3 + topTab.length + guide.gap),
-
-				guidePen.createVLineElement(x1, guideBox.top, y1 - guide.gap),
-				guidePen.createVLineElement(x2 - bottomTab.length, guideBox.top, y1 - guide.gap),
-				guidePen.createVLineElement(x2, guideBox.top, y1 - guide.gap),
-				guidePen.createVLineElement(x3, guideBox.top, y1 - guide.gap),
-				guidePen.createVLineElement(x3 + topTab.length, guideBox.top, y2 - guide.gap),
-				guidePen.createVLineElement(x4, guideBox.top, y2 - guide.gap),
-				guidePen.createVLineElement(x5, guideBox.top, y2 - guide.gap),
-
-				guidePen.createVLineElement(x1, guideBox.bottom, y5 + guide.gap),
-				guidePen.createVLineElement(x2 - bottomTab.length, guideBox.bottom, y5 + guide.gap),
-				guidePen.createVLineElement(x2, guideBox.bottom, y6 + guide.gap),
-				guidePen.createVLineElement(x3, guideBox.bottom, y6 + guide.gap),
-				guidePen.createVLineElement(x3 + topTab.length, guideBox.bottom, y6 + guide.gap),
-				guidePen.createVLineElement(x4, guideBox.bottom, y3 + guide.gap),
-				guidePen.createVLineElement(x5, guideBox.bottom, y3 + guide.gap)
-			);
-
-			if (backSlits.length > 0) {
-				guideLayer.addChildren(
-					guidePen.createVLineElement(x3 - backSlits.length, guideBox.top, y1 - guide.gap),
-					guidePen.createVLineElement(x3 - backSlits.length, guideBox.bottom, y6 + guide.gap)
-				);
-			}
-
-			if (bottomFlap.gap > 0) {
-				guideLayer.addChildren(
-					guidePen.createVLineElement(x1 + bottomFlap.gap, guideBox.top, y1 - guide.gap),
-					guidePen.createVLineElement(x1 + bottomFlap.gap, guideBox.bottom, y5 + guide.gap)
-				);
-			}
-
-			if (thumbNotch.radius > 0) {
-				guideLayer.addChildren(
-					guidePen.createCircleElement({ x: x3 + thumbNotch.offset, y: (y4 + y5) / 2}, thumbNotch.radius));
-			}
 
 			return svgDoc.toString();
 		}

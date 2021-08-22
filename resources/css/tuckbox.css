@@ -7,24 +7,6 @@
     overflow: hidden;
 }
 
-span.glyph {
-	background: no-repeat center;
-	display: inline-block;
-	height: 16px;
-	margin-right: 4px;
-	vertical-align: middle;
-	width: 16px;
-}
-#svgCopyButton>span.glyph {
-	background-image: url(../images/icon-copy-to-clipboard.png);
-}
-#svgSaveButton>span.glyph {
-	background-image: url(../images/icon-save-file.png);
-}
-#svgViewButton>span.glyph {
-	background-image: url(../images/icon-view.png);
-}
-
 body {
     background-color: rgb(110,151,145); /* #6FB8BF */
     font: normal 14px Verdana,Arial,sans-serif;
@@ -54,12 +36,28 @@ button::-moz-focus-inner {
     border: 0;
 }
 
+input {
+	width: 50px;
+}
+input,
+select {
+	padding: 2px;
+}
+input[readonly],
+select[disabled].readonly {
+	background-color: rgba(0,0,0,0);
+	color: #000000;
+}
+
 fieldset { /* TODO - non-semantic */
 	margin: 0 12px;
 	border: 1px solid rgb(181,139,53);
 	border-radius: 6px;
-	padding: 4px 8px 6px 8px;
+	padding: 0 8px 6px 8px;
 	background-color: rgb(220,214,180);
+}
+fieldset>fieldset:first-of-type {
+	margin: 4px;
 }
 fieldset>fieldset:not(:first-of-type) {
 	margin: 12px;
@@ -76,16 +74,6 @@ fieldset > legend { /* TODO - non-semantic */
 .field {
 	margin: 8px 0 8px 8px;
 }
-
-input {
-	width: 50px;
-}
-input[readonly],
-select[disabled].readonly {
-	background-color: rgba(0,0,0,0);
-	color: #000000;
-}
-
 .label {
 	display: inline-block;
 	min-width: 60px;
@@ -99,6 +87,68 @@ select[disabled].readonly {
 	color: red;
 }
 
+span.glyph {
+	background: no-repeat center;
+	display: inline-block;
+	height: 16px;
+	margin-right: 4px;
+	vertical-align: middle;
+	width: 16px;
+}
+
+#svgCopyButton>span.glyph {
+	background-image: url(../images/icon-copy-to-clipboard.png);
+}
+#svgSaveButton>span.glyph {
+	background-image: url(../images/icon-save-file.png);
+}
+#svgViewButton>span.glyph {
+	background-image: url(../images/icon-view.png);
+}
+
+#settings {
+	float: left;
+	width: 320px;
+}
+
+#previewContainer {
+	float: left;
+	margin: 0;
+	padding: 0;
+}
+
+#preview {
+	background-color: white;
+	border: 1px solid black;
+	margin: 0;
+	padding: 0;
+}
+
+/*
+  #fieldGroupChooser
+*/
+#fieldGroupChooser {
+	background-color: rgb(220,214,180);
+	float: left;
+	list-style-type: none;
+	margin: 0;
+	min-width: 132px;
+	padding: 0;
+}
+#fieldGroupChooser>li {
+	cursor: pointer;
+	margin: 2px 0;
+	padding: 4px;
+}
+#fieldGroupChooser>li:hover,
+#fieldGroupChooser>li.active {
+	background: rgb(181,139,53) url("../images/icon-arrow.png") no-repeat center right 4px;
+	color: white;
+}
+
+/*
+  #app_header
+*/
 #app_header {
     background: linear-gradient(rgb(70, 128, 116), rgb(35,47,45));
     border: 0;
@@ -131,6 +181,9 @@ select[disabled].readonly {
     text-shadow: -2px -2px 0 rgb(26,37,33), 1px 1px 0 rgb(214,202,162);
 }
 
+/*
+  #mainTabContainer
+*/
 #mainTabContainer {
     border-bottom: 4px ridge rgb(41,66,60);
     list-style: none;
@@ -176,11 +229,14 @@ select[disabled].readonly {
     color: rgb(35,47,45);
 }
 
+/*
+  #bodyContainer
+*/
 #bodyContainer {
     background-color: rgb(170,183,174);
     /* background-color: rgb(130,163,154); */
     margin: 0;
-    padding: 6px 12px;
+    padding: 10px 12px;
 }
 #bodyContainer:after { /* clearfix */
     visibility: hidden;
@@ -188,7 +244,6 @@ select[disabled].readonly {
     content: "";
     clear: both;
     height: 0;
-    margin: 0;
 }
 #bodyContainer h2.pageTitle {
     color: rgb(166,76,52);
@@ -205,24 +260,11 @@ select[disabled].readonly {
     text-shadow: -1px -1px rgb(214,202,162), 1px 1px rgb(35,47,45);
 }
 
-#fieldGroupChooser {
-	background-color: rgb(220,214,180);
-	float: left;
-	list-style-type: none;
-	margin: 0;
-	min-width: 132px;
-	padding: 0;
-}
-#fieldGroupChooser>li {
-	cursor: pointer;
-	margin: 2px 0;
-	padding: 4px;
-}
-#fieldGroupChooser>li:hover,
-#fieldGroupChooser>li.active {
-	background: rgb(181,139,53) url("../images/icon-arrow.png") no-repeat center right 4px;
-	color: white;
-}
+/*
+  ============================================================
+  PAGE: TUCKBOX
+  ============================================================
+*/
 
 /*
   PAPER FIELD GROUP
@@ -234,6 +276,17 @@ select[disabled].readonly {
 #page_tuckbox #paperMarginsFieldGroup {
 	margin-left: 12px;
 	width: auto;
+}
+
+/*
+  GUIDE LINES FIELD GROUP
+*/
+#page_tuckbox #guideLinesFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+#page_tuckbox #guideLinesFieldGroup .label {
+	min-width: 120px;
 }
 
 /*
@@ -343,12 +396,10 @@ select[disabled].readonly {
 }
 
 #page_tuckbox #buttonGroup {
-	margin: 12px 0;
+	margin: 0 0 12px 0;
 }
 
-#body {
-}
-#body:after { /* clearfix */
+#page_tuckbox #backgroundFieldGroup:after { /* clearfix */
 	visibility: hidden;
 	display: block;
 	content: "";
@@ -356,20 +407,153 @@ select[disabled].readonly {
 	height: 0;
 }
 
-#settings {
-	float: left;
-	width: 320px;
+#page_tuckbox #saveDialogContainer .filename {
+	width: 200px;
 }
 
-#previewContainer {
-	float: left;
-	margin: 0;
+#page_tuckbox #viewDialogContainer .svgDocText {
+	display: block;
+	font: 12px monospace;
+	height: 400px;
+	width: 100%;
+}
+
+#page_tuckbox #previewDialogContainer .svgPreview {
+	border: 1px solid black;
 	padding: 0;
 }
 
-#preview {
-	background-color: white;
+/*
+  ============================================================
+  PAGE: TELESCOPING BOX
+  ============================================================
+*/
+
+/*
+  PAPER FIELD GROUP
+*/
+#page_telescoping_box #paperSizeFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+#page_telescoping_box #paperMarginsFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  GUIDE LINES FIELD GROUP
+*/
+#page_telescoping_box #guideLinesFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+#page_telescoping_box #guideLinesFieldGroup .label {
+	min-width: 120px;
+}
+
+/*
+  BOX SIZE FIELD GROUP
+*/
+#page_telescoping_box #boxSizeFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_telescoping_box #cardDimensionsFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+#page_telescoping_box #cardDimensionsFieldGroup .label {
+	min-width: 96px;
+}
+#page_telescoping_box #cardMaterialFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  FLAPS FIELD GROUP
+*/
+#page_telescoping_box #flapsFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_telescoping_box #flapsFieldGroup .label {
+	min-width: 90px;
+}
+#page_telescoping_box #flapsFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  OVERLAP FIELD GROUP
+*/
+#page_telescoping_box #overlapFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_telescoping_box #overlapFieldGroup .label {
+	min-width: 90px;
+}
+#page_telescoping_box #overlapFieldGroup {
+	margin-left: 12px;
+	width: auto;
+}
+
+/*
+  BACKGROUND FIELD GROUP
+*/
+#page_telescoping_box #backgroundFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+#page_telescoping_box #backgroundFieldGroup .label {
+	min-width: 50px;
+}
+#page_telescoping_box #backgroundFieldGroup #outside_background_color {
+	width: 124px;
+}
+#page_telescoping_box #backgroundFieldGroup #inside_background_color {
+	width: 124px;
+}
+
+#page_telescoping_box #buttonGroup {
+	margin: 0 0 12px 0;
+}
+
+#page_telescoping_box #backgroundFieldGroup:after { /* clearfix */
+	visibility: hidden;
+	display: block;
+	content: "";
+	clear: both;
+	height: 0;
+}
+
+#page_telescoping_box #saveDialogContainer .filename {
+	width: 200px;
+}
+
+#page_telescoping_box #viewDialogContainer .svgDocText {
+	display: block;
+	font: 12px monospace;
+	height: 400px;
+	width: 100%;
+}
+
+#page_telescoping_box #previewDialogContainer .svgPreview {
 	border: 1px solid black;
-	margin: 0;
 	padding: 0;
 }
